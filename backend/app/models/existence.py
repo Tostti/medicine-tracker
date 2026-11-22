@@ -1,10 +1,17 @@
-from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey
+from datetime import date
+
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.database import Base
+
 
 class Existence(Base):
     __tablename__ = "existences"
 
-    id = Column(Integer, primary_key=True, index=True)
-    due_date = Column(Date, index=True, nullable=False)
-    low_amount = Column(Boolean, index=True, nullable=False)
-    medication_id = Column(Integer, ForeignKey("medications.id"), index=True, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    due_date: Mapped[date] = mapped_column(index=True)
+    low_amount: Mapped[bool] = mapped_column()
+    medication_id: Mapped[int] = mapped_column(ForeignKey("medications.id"), index=True)
+
+    medication: Mapped["Medication"] = relationship(back_populates="existences")

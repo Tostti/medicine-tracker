@@ -1,11 +1,22 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.database import Base
+
 
 class Medication(Base):
     __tablename__ = "medications"
 
-    id = Column(Integer, primary_key=True, index=True)
-    commercial_name = Column(String, index=True, nullable=False)
-    type = Column(String)
-    function = Column(String, index=True)
-    picture_uri = Column(String)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    commercial_name: Mapped[str] = mapped_column(index=True)
+    type: Mapped[str | None] = mapped_column()
+    function: Mapped[str | None] = mapped_column()
+    picture_uri: Mapped[str | None] = mapped_column()
+
+    existences: Mapped[list["Existence"]] = relationship(back_populates="medication")
+
+    members: Mapped[list["Member"]] = relationship(
+        secondary="usual_medications",
+        back_populates="usual_medications",
+    )
+
+    drugs: Mapped[list["MedicationDrug"]] = relationship(back_populates="medication")
