@@ -12,7 +12,10 @@ class Medication(Base):
     function: Mapped[str | None] = mapped_column()
     picture_uri: Mapped[str | None] = mapped_column()
 
-    existences: Mapped[list["Existence"]] = relationship(back_populates="medication")
+    existences: Mapped[list["Existence"]] = relationship(
+        back_populates="medication",
+        order_by="Existence.due_date",
+    )
 
     members: Mapped[list["Member"]] = relationship(
         secondary="usual_medications",
