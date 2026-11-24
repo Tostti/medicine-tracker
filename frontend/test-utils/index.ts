@@ -1,2 +1,3 @@
 export * from '@testing-library/react';
-export { render } from './render';
+export { render, renderApp } from './render';
+export { aMedication, daysFromToday, jsonResponse, mockFetch } from './mocks';

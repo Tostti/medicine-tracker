@@ -73,6 +73,16 @@ yarn dev                 # http://localhost:5173, /api is proxied to localhost:8
 Frontend scripts are listed in [frontend/README.md](frontend/README.md); `yarn test`
 runs formatting, lint, type checks, unused-code checks, tests and the build.
 
+Backend tests run against a real PostgreSQL, in a separate `medicine_tracker_test` database
+that is recreated on every run (the app's data is never touched):
+
+```sh
+cd backend
+python -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+docker compose up -d db  # the tests use the credentials in .env, on localhost
+.venv/bin/pytest
+```
+
 Backend changes need a rebuild of its container (`docker compose up -d --build backend`).
 New migrations: `alembic revision --autogenerate -m "..."` inside `backend/`.
 

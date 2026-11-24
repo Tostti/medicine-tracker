@@ -43,8 +43,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './vitest.setup.mjs',
-    // No tests yet: don't fail `yarn test` until the first one is written.
-    passWithNoTests: true,
+    // Undo vi.stubGlobal (e.g. a mocked fetch) and vi.spyOn after every test.
+    unstubGlobals: true,
+    restoreMocks: true,
   },
 
   resolve: {

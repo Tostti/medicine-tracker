@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Lets the tests import `app` (and `tests.utils`) when run from backend/.
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
