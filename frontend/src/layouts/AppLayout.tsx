@@ -8,7 +8,6 @@ import {
   AppShell,
   Box,
   Group,
-  Image,
   NavLink,
   Stack,
   Text,
@@ -18,6 +17,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { OfflineBanner } from '../components/Offline/OfflineBanner';
 import { MedicationSearch } from '../components/Search/MedicationSearch';
+import classes from './AppLayout.module.css';
 
 // Home only on its own address; the rest also on their sub-pages (/medications/5).
 const isActive = (pathname: string, to: string) =>
@@ -43,8 +43,10 @@ export function AppLayout() {
     >
       <AppShell.Header>
         <Group h="100%" px="md" gap="sm">
-          <Image src="/pill.svg" alt="" w={32} h={32} />
-          <Title order={3}>Medicine Tracker</Title>
+          <span className={classes.logo} aria-hidden />
+          <Title order={3} className="trim-to-caps">
+            Medicine Tracker
+          </Title>
         </Group>
       </AppShell.Header>
 

@@ -1,0 +1,20 @@
+/*
+ * Text next to an icon is centered on its line box, which leaves room below the letters
+ * for descenders (g, p, y): words without them look 1-3px higher than the icon.
+ * text-box trims the box to the capital letters, so centering lines up with what you see.
+ * Browsers without support (older Firefox) keep the previous look.
+ */
+
+/* Mantine's label is a flex box, where text-box does nothing: a plain block makes it apply.
+   overflow: visible so descenders and accents, now outside the trimmed box, aren't cut off. */
+.mantine-Button-label {
+  display: block;
+  height: auto;
+  overflow: visible;
+  text-box: trim-both cap alphabetic;
+}
+
+/* For a title or text that sits next to an icon. */
+.trim-to-caps {
+  text-box: trim-both cap alphabetic;
+}

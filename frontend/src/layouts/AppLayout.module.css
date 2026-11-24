@@ -1,0 +1,9 @@
+/* The pill drawn in the current text color: the SVG file's own fill (#444) disappears
+   on the dark background. The file is only used as a shape (mask). */
+.logo {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background-color: currentColor;
+  mask: url('/pill.svg') center / contain no-repeat;
+}

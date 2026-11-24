@@ -6,6 +6,8 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { MantineProvider } from '@mantine/core';
 import { Router } from './Router';
 import { cssVariablesResolver, theme } from './theme';
+// After Mantine's styles, so its rules can be overridden.
+import './global.css';
 
 // How long cached results survive (in memory and in localStorage) to be shown offline.
 const CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
