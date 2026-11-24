@@ -1,9 +1,13 @@
+import { IconHome, IconPackage, IconPill, IconSearch } from '@tabler/icons-react';
+import { Outlet, NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 import {
   ActionIcon,
   Affix,
+  Anchor,
   AppShell,
   Box,
   Group,
+  Image,
   NavLink,
   Stack,
   Text,
@@ -11,8 +15,6 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconHome, IconPackage, IconPill, IconSearch } from '@tabler/icons-react';
-import { Outlet, NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 import { MedicationSearch } from '../components/Search/MedicationSearch';
 
 // Home only on its own address; the rest also on their sub-pages (/medications/5).
@@ -37,23 +39,38 @@ export function AppLayout() {
       footer={{ height: { base: 64, sm: 0 } }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md">
+        <Group h="100%" px="md" gap="sm">
+          <Image src="/pill.svg" alt="" w={32} h={32} />
           <Title order={3}>Medicine Tracker</Title>
         </Group>
       </AppShell.Header>
 
       {/* Desktop: sidebar */}
       <AppShell.Navbar p="md">
-        {links.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            component={RouterNavLink}
-            to={to}
-            label={label}
-            leftSection={<Icon size={18} />}
-            active={isActive(pathname, to)}
-          />
-        ))}
+        <Stack h="100%" gap={0}>
+          {links.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              component={RouterNavLink}
+              to={to}
+              label={label}
+              leftSection={<Icon size={18} />}
+              active={isActive(pathname, to)}
+            />
+          ))}
+          {/* Required by the icon's CC BY 4.0 license */}
+          <Text size="xs" c="dimmed" mt="auto">
+            Pill icon by Vaadin on{' '}
+            <Anchor href="https://icon-icons.com/authors/353-vaadin" target="_blank" inherit>
+              Icon-Icons.com
+            </Anchor>{' '}
+            (
+            <Anchor href="https://creativecommons.org/licenses/by/4.0/" target="_blank" inherit>
+              CC BY 4.0
+            </Anchor>
+            )
+          </Text>
+        </Stack>
       </AppShell.Navbar>
 
       <AppShell.Main>
@@ -86,9 +103,7 @@ export function AppLayout() {
       </AppShell.Footer>
 
       {/* Floating search button: sits above the tab bar on mobile */}
-      <Affix
-        position={{ right: 20, bottom: 'calc(var(--app-shell-footer-offset, 0rem) + 20px)' }}
-      >
+      <Affix position={{ right: 20, bottom: 'calc(var(--app-shell-footer-offset, 0rem) + 20px)' }}>
         <ActionIcon
           size={56}
           radius="xl"
