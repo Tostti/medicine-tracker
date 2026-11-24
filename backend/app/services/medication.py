@@ -6,7 +6,7 @@ from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Drug, Existence, Medication, MedicationDrug
-from app.schemas.medication import MedicationCreate
+from app.schemas.medication import MedicationCreate, MedicationUpdate
 from app.services import drug as drug_service
 from app.services import image as image_service
 from app.services import storage
@@ -29,6 +29,7 @@ def get_medications(
     drug: str | None = None,
     function: str | None = None,
     in_stock: bool = False,
+    common_use: bool | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> Sequence[Medication]:
@@ -57,7 +58,8 @@ def get_medications(
 
     if in_stock:
         stmt = stmt.where(Medication.existences.any(Existence.due_date >= date.today()))
-
+    if common_use is not None:
+        stmt = stmt.where(Medication.common_use == common_use)
     stmt = stmt.order_by(Medication.id).offset(skip).limit(limit)
     return db.scalars(stmt).all()
 
@@ -131,4 +133,15 @@ def set_picture(db: Session, medication: Medication, data: bytes) -> Medication:
             storage.delete_object(old)
         except Exception:
             logger.warning("Couldn't delete old picture %s", old, exc_info=True)
+    return medication
+
+def edit_medication(
+    db: Session,
+    medication: Medication,
+    payload: MedicationUpdate,
+) -> Medication:
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(medication, field, value)
+    db.commit()
+    db.refresh(medication)
     return medication

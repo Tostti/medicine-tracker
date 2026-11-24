@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.images import read_upload, storage_errors
 from app.db.database import get_db
-from app.schemas.medication import MedicationDetail, MedicationCreate
+from app.schemas.medication import MedicationDetail, MedicationCreate, MedicationUpdate
 from app.schemas.existence import ExistenceRead, ExistenceCreate
 from app.services import (
     medication as medication_service,
@@ -22,6 +22,7 @@ def list_medications(
     drug: str | None = None,
     function: str | None = None,
     in_stock: bool = False,
+    common_use: bool | None = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -29,6 +30,7 @@ def list_medications(
     return medication_service.get_medications(
         db,
         q=q,
+        common_use=common_use,
         drug=drug,
         function=function,
         in_stock=in_stock,
@@ -71,6 +73,18 @@ def get_medication_existences(
         limit=limit,
     )
 
+@router.patch(
+    "/{medication_id}", response_model=MedicationDetail, status_code=status.HTTP_200_OK
+)
+def update_medication(
+    payload: MedicationUpdate,
+    medication_id: int,
+    db: Session = Depends(get_db),
+):
+    medication = medication_service.get_medication(db, medication_id=medication_id)
+    if medication is None:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    return medication_service.edit_medication(db, medication, payload)
 
 @router.post(
     "/{medication_id}/existences",

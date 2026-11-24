@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.existence import ExistenceCreate, ExistenceUpdate
+from app.schemas.existence import ExistenceUpdate
 from app.services import existence as existence_service
 
 router = APIRouter(

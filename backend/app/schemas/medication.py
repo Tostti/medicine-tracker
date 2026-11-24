@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict, field_validator
 
 from app.schemas.drug import MedicationDrugRead, MedicationDrugCreate
 from app.schemas.existence import ExistenceCreate, ExistenceRead
@@ -23,6 +23,7 @@ class MedicationBase(BaseModel):
     type: str | None = None
     function: str | None = None
     picture_uri: str | None = None
+    common_use: bool = False
 
 
 class MedicationCreate(MedicationBase):
@@ -37,6 +38,17 @@ class MedicationUpdate(BaseModel):
     type: str | None = None
     function: str | None = None
     picture_uri: PictureUri = None
+    common_use: bool | None = None
+
+    # PATCH semantics: leaving a field out keeps it, but these columns are NOT NULL,
+    # so an explicit null must be a 422 instead of a database error (500).
+    # Validators only run on fields that were sent, so omitting them is still fine.
+    @field_validator("commercial_name", "common_use")
+    @classmethod
+    def _not_null(cls, v):
+        if v is None:
+            raise ValueError("cannot be null")
+        return v
 
 
 class MedicationRead(MedicationBase):

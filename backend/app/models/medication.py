@@ -1,3 +1,4 @@
+from sqlalchemy import false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -11,7 +12,7 @@ class Medication(Base):
     type: Mapped[str | None] = mapped_column()
     function: Mapped[str | None] = mapped_column()
     picture_uri: Mapped[str | None] = mapped_column()
-
+    common_use: Mapped[bool] = mapped_column(default=False, server_default=false())
     existences: Mapped[list["Existence"]] = relationship(
         back_populates="medication",
         order_by="Existence.due_date",
