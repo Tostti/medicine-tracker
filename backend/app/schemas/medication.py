@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.drug import MedicationDrugRead, MedicationDrugCreate
-from app.schemas.existence import ExistenceRead
+from app.schemas.existence import ExistenceCreate, ExistenceRead
 
 
 class MedicationBase(BaseModel):
@@ -13,6 +13,8 @@ class MedicationBase(BaseModel):
 
 class MedicationCreate(MedicationBase):
     drugs: list[MedicationDrugCreate]
+    # Optional first stock, so adding a medication you have in hand is one step.
+    existences: list[ExistenceCreate] = []
 
 
 class MedicationUpdate(BaseModel):

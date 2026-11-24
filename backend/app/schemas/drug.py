@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 
 class DrugBase(BaseModel):
@@ -34,5 +34,20 @@ class MedicationDrugRead(BaseModel):
 
 
 class MedicationDrugCreate(BaseModel):
-    drug_id: int
+    """A drug to attach to a new medication.
+
+    Pass `drug_id` for an existing drug, or `name` to reuse a drug with that
+    name (case-insensitive) or create it if it doesn't exist yet.
+    """
+
+    drug_id: int | None = None
+    name: str | None = None
     dose: str
+
+    @model_validator(mode="after")
+    def exactly_one_of_id_or_name(self) -> "MedicationDrugCreate":
+        if self.name is not None:
+            self.name = self.name.strip() or None
+        if (self.drug_id is None) == (self.name is None):
+            raise ValueError("provide exactly one of drug_id or name")
+        return self

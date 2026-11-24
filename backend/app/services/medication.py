@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import Drug, Existence, Medication, MedicationDrug
 from app.schemas.medication import MedicationCreate
+from app.services import drug as drug_service
 
 
 def get_medications(
@@ -51,13 +52,42 @@ def get_medication(
     return db.scalars(stmt).one_or_none()
 
 
+class InvalidMedicationError(ValueError):
+    """The payload refers to something that doesn't exist or doesn't make sense."""
+
+
 def create_medication(db: Session, payload: MedicationCreate) -> Medication:
-    data = payload.model_dump(exclude={"drugs"})
-    db_item = Medication(**data)
-    db_item.drugs = [
-        MedicationDrug(drug_id=d.drug_id, dose=d.dose) for d in payload.drugs
-    ]
-    db.add(db_item)
-    db.commit()
+    """Create a medication with its drugs (new or existing) and first existences.
+
+    Everything happens in one transaction: if any part fails, nothing is saved,
+    so an abandoned or invalid form never leaves orphan drugs behind.
+    """
+    try:
+        db_item = Medication(**payload.model_dump(exclude={"drugs", "existences"}))
+
+        seen_drug_ids: set[int] = set()
+        for d in payload.drugs:
+            if d.drug_id is not None:
+                drug = drug_service.get_drug(db, d.drug_id)
+                if drug is None:
+                    raise InvalidMedicationError(f"Drug {d.drug_id} not found")
+            else:
+                drug = drug_service.get_or_create_drug(db, d.name)
+
+            # A drug can only appear once per medication (it's the primary key).
+            if drug.id in seen_drug_ids:
+                raise InvalidMedicationError(f"Drug '{drug.name}' is listed twice")
+            seen_drug_ids.add(drug.id)
+
+            db_item.drugs.append(MedicationDrug(drug=drug, dose=d.dose))
+
+        db_item.existences = [Existence(**e.model_dump()) for e in payload.existences]
+
+        db.add(db_item)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
     db.refresh(db_item)
     return db_item

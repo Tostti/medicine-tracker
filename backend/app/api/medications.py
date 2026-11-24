@@ -87,4 +87,9 @@ def create_medication(
     payload: MedicationCreate,
     db: Session = Depends(get_db),
 ):
-    return medication_service.create_medication(db, payload)
+    try:
+        return medication_service.create_medication(db, payload)
+    except medication_service.InvalidMedicationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+        )
