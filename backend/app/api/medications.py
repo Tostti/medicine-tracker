@@ -17,6 +17,7 @@ router = APIRouter(
 
 @router.get("/", response_model=list[MedicationDetail], status_code=status.HTTP_200_OK)
 def list_medications(
+    q: str | None = None,
     drug: str | None = None,
     function: str | None = None,
     in_stock: bool = False,
@@ -26,6 +27,7 @@ def list_medications(
 ):
     return medication_service.get_medications(
         db,
+        q=q,
         drug=drug,
         function=function,
         in_stock=in_stock,

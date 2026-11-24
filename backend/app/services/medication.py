@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Drug, Existence, Medication, MedicationDrug
@@ -9,8 +9,18 @@ from app.schemas.medication import MedicationCreate
 from app.services import drug as drug_service
 
 
+def _contains(column, term: str) -> ColumnElement[bool]:
+    """Case- and accent-insensitive "contains": "analgesico" matches "Analgésico".
+
+    Escapes % and _ so they're searched literally instead of acting as wildcards.
+    """
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return func.unaccent(column).ilike(func.unaccent(f"%{escaped}%"), escape="\\")
+
+
 def get_medications(
     db: Session,
+    q: str | None = None,
     drug: str | None = None,
     function: str | None = None,
     in_stock: bool = False,
@@ -22,13 +32,23 @@ def get_medications(
         selectinload(Medication.existences),
     )
 
+    if q:
+        stmt = stmt.where(
+            or_(
+                _contains(Medication.commercial_name, q),
+                _contains(Medication.type, q),
+                _contains(Medication.function, q),
+                Medication.drugs.any(MedicationDrug.drug.has(_contains(Drug.name, q))),
+            )
+        )
+
     if drug:
         stmt = stmt.where(
-            Medication.drugs.any(MedicationDrug.drug.has(Drug.name.ilike(f"%{drug}%")))
+            Medication.drugs.any(MedicationDrug.drug.has(_contains(Drug.name, drug)))
         )
 
     if function:
-        stmt = stmt.where(Medication.function.ilike(f"%{function}%"))
+        stmt = stmt.where(_contains(Medication.function, function))
 
     if in_stock:
         stmt = stmt.where(Medication.existences.any(Existence.due_date >= date.today()))
