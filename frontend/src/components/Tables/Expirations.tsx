@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { Badge, EmptyState, Skeleton, Stack, Table, Text, Title } from '@mantine/core';
 import { IconCalendarCheck, IconTrashOff } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import { Badge, EmptyState, Skeleton, Stack, Table, Text, Title } from '@mantine/core';
 import { fetchMedications, type Medication, toISODate } from '../../api/medications';
 
 const UPCOMING_LIMIT = 5;
@@ -21,7 +21,11 @@ const parseISODate = (iso: string) => {
 };
 
 const formatDate = (iso: string) =>
-  parseISODate(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  parseISODate(iso).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
 const pluralDays = (n: number) => (n === 1 ? '1 día' : `${n} días`);
 
@@ -36,7 +40,7 @@ const toExpirations = (medications: Medication[]): Expiration[] => {
         medication: m.commercial_name,
         dueDate: e.due_date,
         daysLeft: Math.round((parseISODate(e.due_date).getTime() - today) / DAY_MS),
-      })),
+      }))
     )
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 };
@@ -59,7 +63,14 @@ interface ExpirationsCardProps {
   empty: ReactNode;
 }
 
-const ExpirationsCard = ({ title, dateHeader, badgeHeader, query, badge, empty }: ExpirationsCardProps) => {
+const ExpirationsCard = ({
+  title,
+  dateHeader,
+  badgeHeader,
+  query,
+  badge,
+  empty,
+}: ExpirationsCardProps) => {
   const { isPending, error, data } = query;
 
   let content: ReactNode;
@@ -116,7 +127,8 @@ const ExpirationsCard = ({ title, dateHeader, badgeHeader, query, badge, empty }
   );
 };
 
-const selectUpcoming = (all: Expiration[]) => all.filter((e) => e.daysLeft >= 0).slice(0, UPCOMING_LIMIT);
+const selectUpcoming = (all: Expiration[]) =>
+  all.filter((e) => e.daysLeft >= 0).slice(0, UPCOMING_LIMIT);
 
 const upcomingBadge = ({ daysLeft }: Expiration) => ({
   label: daysLeft === 0 ? 'hoy' : pluralDays(daysLeft),
@@ -156,7 +168,11 @@ export const ExpiredList = () => (
     query={useExpirations(selectExpired)}
     badge={expiredBadge}
     empty={
-      <EmptyState icon={<IconTrashOff />} title="Nada vencido" description="No hay nada para descartar" />
+      <EmptyState
+        icon={<IconTrashOff />}
+        title="Nada vencido"
+        description="No hay nada para descartar"
+      />
     }
   />
 );

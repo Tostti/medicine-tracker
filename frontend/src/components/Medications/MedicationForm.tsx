@@ -1,4 +1,6 @@
 import { type SubmitEvent, useEffect, useMemo, useState } from 'react';
+import { IconPhoto, IconPill, IconPlus, IconTrash } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ActionIcon,
   Alert,
@@ -14,8 +16,6 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { IconPhoto, IconPill, IconPlus, IconTrash } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
 import { fetchDrugs, type Medication, pictureSrc } from '../../api/medications';
 
 // Each dynamic row has a key of its own so React keeps inputs in place when one is removed.
@@ -74,7 +74,7 @@ export const MedicationForm = ({
   const [drugs, setDrugs] = useState<DrugRow[]>(() =>
     medication && medication.drugs.length > 0
       ? medication.drugs.map((d) => ({ key: newKey(), name: d.drug.name, dose: d.dose }))
-      : [emptyDrug()],
+      : [emptyDrug()]
   );
   // First stock only when creating: afterwards, stock is managed in the Stock tab.
   const [existences, setExistences] = useState<ExistenceRow[]>([]);
@@ -91,7 +91,7 @@ export const MedicationForm = ({
         URL.revokeObjectURL(previewUrl);
       }
     },
-    [previewUrl],
+    [previewUrl]
   );
   const currentPicture = previewUrl ?? pictureSrc(medication?.picture_uri ?? null);
 
@@ -112,7 +112,8 @@ export const MedicationForm = ({
   });
   const duplicatedDrug = (d: DrugRow) =>
     d.name.trim() !== '' &&
-    filledDrugs.filter((o) => o.name.trim().toLowerCase() === d.name.trim().toLowerCase()).length > 1;
+    filledDrugs.filter((o) => o.name.trim().toLowerCase() === d.name.trim().toLowerCase()).length >
+      1;
   const valid =
     !nameError &&
     filledDrugs.every((d) => !drugError(d).name && !drugError(d).dose && !duplicatedDrug(d)) &&
@@ -143,7 +144,6 @@ export const MedicationForm = ({
       setSubmitting(false);
     }
   };
-
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -256,7 +256,9 @@ export const MedicationForm = ({
                 <Checkbox
                   label="Queda poco"
                   checked={e.low_amount}
-                  onChange={(ev) => updateExistence(e.key, { low_amount: ev.currentTarget.checked })}
+                  onChange={(ev) =>
+                    updateExistence(e.key, { low_amount: ev.currentTarget.checked })
+                  }
                 />
                 <ActionIcon
                   variant="subtle"

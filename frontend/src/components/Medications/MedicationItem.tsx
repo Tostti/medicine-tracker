@@ -1,5 +1,5 @@
-import { Avatar, Badge, Group, Stack, Text } from '@mantine/core';
 import { IconPill } from '@tabler/icons-react';
+import { Avatar, Badge, Group, Stack, Text } from '@mantine/core';
 import { type Medication, pictureSrc, toISODate } from '../../api/medications';
 
 // "Do I have it?": count the existences that haven't expired yet.

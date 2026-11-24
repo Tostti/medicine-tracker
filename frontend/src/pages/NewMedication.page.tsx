@@ -1,8 +1,11 @@
-import { Card, Title } from '@mantine/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Card, Title } from '@mantine/core';
 import { createMedication, uploadImage } from '../api/medications';
-import { MedicationForm, type MedicationFormValues } from '../components/Medications/MedicationForm';
+import {
+  MedicationForm,
+  type MedicationFormValues,
+} from '../components/Medications/MedicationForm';
 
 export function NewMedicationPage() {
   const navigate = useNavigate();

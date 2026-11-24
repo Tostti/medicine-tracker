@@ -1,6 +1,6 @@
 import { Card, SimpleGrid } from '@mantine/core';
-import { ExpiredList, NextExpirations } from '../components/Tables/Expirations';
 import BuyingList from '../components/Tables/BuyingList';
+import { ExpiredList, NextExpirations } from '../components/Tables/Expirations';
 
 export function HomePage() {
   return (

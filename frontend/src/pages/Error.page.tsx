@@ -1,6 +1,6 @@
-import { Button, Center, Code, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconAlertTriangle, IconMapPinOff } from '@tabler/icons-react';
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom';
+import { Button, Center, Code, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 
 export function ErrorPage() {
   const error = useRouteError();

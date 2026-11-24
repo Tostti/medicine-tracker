@@ -1,6 +1,6 @@
-import { Badge, EmptyState, Group, List, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import { Badge, EmptyState, Group, List, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { fetchMedications, type Medication, toISODate } from '../../api/medications';
 
 type BuyingReason = 'sin stock' | 'vencido' | 'queda poco' | 'vence pronto';
@@ -64,21 +64,25 @@ const BuyingList = () => {
 
   return (
     <>
-      <Title order={3} mb="md">Lista de compra</Title>
+      <Title order={3} mb="md">
+        Lista de compra
+      </Title>
 
       {isPending ? (
         <Stack gap="xs">
-        <Skeleton height={8} radius="xl" />
-        <Skeleton height={8} radius="xl" />
-        <Skeleton height={8} radius="xl" />
-        <Skeleton height={8} radius="xl" />
+          <Skeleton height={8} radius="xl" />
+          <Skeleton height={8} radius="xl" />
+          <Skeleton height={8} radius="xl" />
+          <Skeleton height={8} radius="xl" />
         </Stack>
       ) : error ? (
         <Text c="red">{error.message}</Text>
       ) : data.length === 0 ? (
-        <EmptyState icon={<IconCheck/>}
-        title="Nada que comprar"
-        description="Todos los medicamentos necesarios están en buenas condiciones" />
+        <EmptyState
+          icon={<IconCheck />}
+          title="Nada que comprar"
+          description="Todos los medicamentos necesarios están en buenas condiciones"
+        />
       ) : (
         <List>
           {data.map(({ medication, reasons }) => (

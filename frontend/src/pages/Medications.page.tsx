@@ -1,24 +1,35 @@
 import { useEffect } from 'react';
-import { Button, EmptyState, Group, Loader, Paper, Skeleton, Stack, Text, Title } from '@mantine/core';
-import { useInViewport } from '@mantine/hooks';
 import { IconPill, IconPlus } from '@tabler/icons-react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import {
+  Button,
+  EmptyState,
+  Group,
+  Loader,
+  Paper,
+  Skeleton,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
+import { useInViewport } from '@mantine/hooks';
 import { fetchMedications } from '../api/medications';
 import { MedicationItem } from '../components/Medications/MedicationItem';
 
 const PAGE_SIZE = 20;
 
 export function MedicationsPage() {
-  const { data, error, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['medications', 'list'],
-    queryFn: ({ pageParam }) => fetchMedications({ skip: pageParam, limit: PAGE_SIZE }),
-    initialPageParam: 0,
-    // The backend gives no total: a short page means there's nothing after it.
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
-    select: (d) => d.pages.flat(),
-  });
+  const { data, error, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ['medications', 'list'],
+      queryFn: ({ pageParam }) => fetchMedications({ skip: pageParam, limit: PAGE_SIZE }),
+      initialPageParam: 0,
+      // The backend gives no total: a short page means there's nothing after it.
+      getNextPageParam: (lastPage, allPages) =>
+        lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
+      select: (d) => d.pages.flat(),
+    });
 
   // An empty element after the last item: when it scrolls into view, load the next page.
   const { ref: sentinelRef, inViewport } = useInViewport();
@@ -52,7 +63,14 @@ export function MedicationsPage() {
     content = (
       <Stack gap="sm">
         {data.map((m) => (
-          <Paper key={m.id} component={Link} to={`/medications/${m.id}`} withBorder radius="md" p="sm">
+          <Paper
+            key={m.id}
+            component={Link}
+            to={`/medications/${m.id}`}
+            withBorder
+            radius="md"
+            p="sm"
+          >
             <MedicationItem medication={m} />
           </Paper>
         ))}
