@@ -84,7 +84,12 @@ def update_medication(
     medication = medication_service.get_medication(db, medication_id=medication_id)
     if medication is None:
         raise HTTPException(status_code=404, detail="Medication not found")
-    return medication_service.edit_medication(db, medication, payload)
+    try:
+        return medication_service.edit_medication(db, medication, payload)
+    except medication_service.InvalidMedicationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+        )
 
 @router.post(
     "/{medication_id}/existences",

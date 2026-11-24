@@ -2,10 +2,11 @@ import logging
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import ColumnElement, func, or_, select
+from sqlalchemy import ColumnElement, delete, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Drug, Existence, Medication, MedicationDrug
+from app.schemas.drug import MedicationDrugCreate
 from app.schemas.medication import MedicationCreate, MedicationUpdate
 from app.services import drug as drug_service
 from app.services import image as image_service
@@ -83,6 +84,31 @@ class InvalidMedicationError(ValueError):
     """The payload refers to something that doesn't exist or doesn't make sense."""
 
 
+def _resolve_drugs(db: Session, drugs: list[MedicationDrugCreate]) -> list[MedicationDrug]:
+    """Turn the drugs of a payload (by id or by name) into rows to attach.
+
+    Doesn't commit: drugs created by name are only flushed, so the caller's
+    transaction saves them together with the medication or not at all.
+    """
+    rows: list[MedicationDrug] = []
+    seen_drug_ids: set[int] = set()
+    for d in drugs:
+        if d.drug_id is not None:
+            drug = drug_service.get_drug(db, d.drug_id)
+            if drug is None:
+                raise InvalidMedicationError(f"Drug {d.drug_id} not found")
+        else:
+            drug = drug_service.get_or_create_drug(db, d.name)
+
+        # A drug can only appear once per medication (it's the primary key).
+        if drug.id in seen_drug_ids:
+            raise InvalidMedicationError(f"Drug '{drug.name}' is listed twice")
+        seen_drug_ids.add(drug.id)
+
+        rows.append(MedicationDrug(drug=drug, dose=d.dose))
+    return rows
+
+
 def create_medication(db: Session, payload: MedicationCreate) -> Medication:
     """Create a medication with its drugs (new or existing) and first existences.
 
@@ -92,22 +118,7 @@ def create_medication(db: Session, payload: MedicationCreate) -> Medication:
     try:
         db_item = Medication(**payload.model_dump(exclude={"drugs", "existences"}))
 
-        seen_drug_ids: set[int] = set()
-        for d in payload.drugs:
-            if d.drug_id is not None:
-                drug = drug_service.get_drug(db, d.drug_id)
-                if drug is None:
-                    raise InvalidMedicationError(f"Drug {d.drug_id} not found")
-            else:
-                drug = drug_service.get_or_create_drug(db, d.name)
-
-            # A drug can only appear once per medication (it's the primary key).
-            if drug.id in seen_drug_ids:
-                raise InvalidMedicationError(f"Drug '{drug.name}' is listed twice")
-            seen_drug_ids.add(drug.id)
-
-            db_item.drugs.append(MedicationDrug(drug=drug, dose=d.dose))
-
+        db_item.drugs = _resolve_drugs(db, payload.drugs)
         db_item.existences = [Existence(**e.model_dump()) for e in payload.existences]
 
         db.add(db_item)
@@ -140,8 +151,23 @@ def edit_medication(
     medication: Medication,
     payload: MedicationUpdate,
 ) -> Medication:
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(medication, field, value)
-    db.commit()
+    """Update the fields that were sent. `drugs`, if sent, replaces the whole list."""
+    try:
+        for field, value in payload.model_dump(exclude_unset=True, exclude={"drugs"}).items():
+            setattr(medication, field, value)
+
+        if "drugs" in payload.model_fields_set:
+            new_drugs = _resolve_drugs(db, payload.drugs)
+            # Delete the old rows first: a drug that stays keeps the same primary key
+            # (drug_id, medication_id), so it's removed and inserted again with its new dose.
+            db.execute(delete(MedicationDrug).where(MedicationDrug.medication_id == medication.id))
+            db.expire(medication, ["drugs"])
+            medication.drugs.extend(new_drugs)
+
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
     db.refresh(medication)
     return medication
