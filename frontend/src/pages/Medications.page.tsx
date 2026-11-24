@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { IconPill, IconPlus } from '@tabler/icons-react';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   Button,
@@ -20,6 +21,7 @@ import { MedicationItem } from '../components/Medications/MedicationItem';
 const PAGE_SIZE = 20;
 
 export function MedicationsPage() {
+  const { t } = useTranslation();
   const { data, error, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ['medications', 'list'],
@@ -55,8 +57,8 @@ export function MedicationsPage() {
     content = (
       <EmptyState
         icon={<IconPill />}
-        title="Sin medicamentos"
-        description="Todavía no cargaste ningún medicamento"
+        title={t('medications.emptyTitle')}
+        description={t('medications.emptyText')}
       />
     );
   } else {
@@ -87,9 +89,9 @@ export function MedicationsPage() {
   return (
     <>
       <Group justify="space-between" mb="md">
-        <Title order={2}>Medicamentos</Title>
+        <Title order={2}>{t('medications.title')}</Title>
         <Button component={Link} to="/medications/new" leftSection={<IconPlus size={18} />}>
-          Agregar
+          {t('common.add')}
         </Button>
       </Group>
       {content}

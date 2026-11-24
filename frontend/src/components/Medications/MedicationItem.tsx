@@ -1,18 +1,20 @@
 import { IconPill } from '@tabler/icons-react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { Avatar, Badge, Group, Stack, Text } from '@mantine/core';
 import { type Medication, pictureSrc, toISODate } from '../../api/medications';
 
 // "Do I have it?": count the existences that haven't expired yet.
-const stockStatus = (m: Medication) => {
+const stockStatus = (m: Medication, t: TFunction) => {
   const today = toISODate(new Date());
   const valid = m.existences.filter((e) => e.due_date >= today);
   if (valid.length > 0) {
-    return { label: `En stock (${valid.length})`, color: 'green' };
+    return { label: t('medicationItem.inStock', { count: valid.length }), color: 'green' };
   }
   if (m.existences.length > 0) {
-    return { label: 'Vencido', color: 'red' };
+    return { label: t('common.expired'), color: 'red' };
   }
-  return { label: 'Sin stock', color: 'gray' };
+  return { label: t('common.noStock'), color: 'gray' };
 };
 
 interface MedicationItemProps {
@@ -22,7 +24,8 @@ interface MedicationItemProps {
 }
 
 export const MedicationItem = ({ medication, showStock = false }: MedicationItemProps) => {
-  const status = showStock ? stockStatus(medication) : null;
+  const { t } = useTranslation();
+  const status = showStock ? stockStatus(medication, t) : null;
   const details = [medication.type, medication.function].filter(Boolean).join(' · ');
   const drugs = medication.drugs.map((d) => `${d.drug.name} ${d.dose}`).join(', ');
 

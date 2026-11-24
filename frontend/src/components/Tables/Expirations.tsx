@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { IconCalendarCheck, IconTrashOff } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { Badge, EmptyState, Skeleton, Stack, Table, Text, Title } from '@mantine/core';
 import { fetchMedications, type Medication, toISODate } from '../../api/medications';
+import { formatDate, parseISODate } from '../../i18n';
 
 const UPCOMING_LIMIT = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -13,21 +16,6 @@ interface Expiration {
   dueDate: string;
   daysLeft: number; // negative once expired
 }
-
-// "YYYY-MM-DD" parsed as a local date (new Date("YYYY-MM-DD") would be UTC midnight).
-const parseISODate = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, m - 1, d);
-};
-
-const formatDate = (iso: string) =>
-  parseISODate(iso).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-
-const pluralDays = (n: number) => (n === 1 ? '1 día' : `${n} días`);
 
 // Every existence of every medication, soonest first.
 const toExpirations = (medications: Medication[]): Expiration[] => {
@@ -59,7 +47,7 @@ interface ExpirationsCardProps {
   dateHeader: string;
   badgeHeader: string;
   query: ReturnType<typeof useExpirations>;
-  badge: (e: Expiration) => { label: string; color: string };
+  badge: (e: Expiration, t: TFunction) => { label: string; color: string };
   empty: ReactNode;
 }
 
@@ -71,6 +59,7 @@ const ExpirationsCard = ({
   badge,
   empty,
 }: ExpirationsCardProps) => {
+  const { t } = useTranslation();
   const { isPending, error, data } = query;
 
   let content: ReactNode;
@@ -92,14 +81,14 @@ const ExpirationsCard = ({
       <Table>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Medicamento</Table.Th>
+            <Table.Th>{t('common.medication')}</Table.Th>
             <Table.Th>{dateHeader}</Table.Th>
             <Table.Th>{badgeHeader}</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
           {data.map((e) => {
-            const { label, color } = badge(e);
+            const { label, color } = badge(e, t);
             return (
               <Table.Tr key={e.id}>
                 <Table.Td>{e.medication}</Table.Td>
@@ -130,49 +119,55 @@ const ExpirationsCard = ({
 const selectUpcoming = (all: Expiration[]) =>
   all.filter((e) => e.daysLeft >= 0).slice(0, UPCOMING_LIMIT);
 
-const upcomingBadge = ({ daysLeft }: Expiration) => ({
-  label: daysLeft === 0 ? 'hoy' : pluralDays(daysLeft),
+const upcomingBadge = ({ daysLeft }: Expiration, t: TFunction) => ({
+  label: daysLeft === 0 ? t('expirations.today') : t('expirations.days', { count: daysLeft }),
   color: daysLeft <= 7 ? 'red' : daysLeft <= 30 ? 'orange' : 'gray',
 });
 
-export const NextExpirations = () => (
-  <ExpirationsCard
-    title="Próximos vencimientos"
-    dateHeader="Vence"
-    badgeHeader="Faltan"
-    query={useExpirations(selectUpcoming)}
-    badge={upcomingBadge}
-    empty={
-      <EmptyState
-        icon={<IconCalendarCheck />}
-        title="Nada por vencer"
-        description="No hay existencias con vencimiento futuro"
-      />
-    }
-  />
-);
+export const NextExpirations = () => {
+  const { t } = useTranslation();
+  return (
+    <ExpirationsCard
+      title={t('expirations.upcomingTitle')}
+      dateHeader={t('expirations.upcomingDate')}
+      badgeHeader={t('expirations.upcomingLeft')}
+      query={useExpirations(selectUpcoming)}
+      badge={upcomingBadge}
+      empty={
+        <EmptyState
+          icon={<IconCalendarCheck />}
+          title={t('expirations.upcomingEmptyTitle')}
+          description={t('expirations.upcomingEmptyText')}
+        />
+      }
+    />
+  );
+};
 
 // All of them, oldest first: it's the list of what to throw away.
 const selectExpired = (all: Expiration[]) => all.filter((e) => e.daysLeft < 0);
 
-const expiredBadge = ({ daysLeft }: Expiration) => ({
-  label: `hace ${pluralDays(-daysLeft)}`,
+const expiredBadge = ({ daysLeft }: Expiration, t: TFunction) => ({
+  label: t('expirations.daysAgo', { count: -daysLeft }),
   color: 'red',
 });
 
-export const ExpiredList = () => (
-  <ExpirationsCard
-    title="Vencidos"
-    dateHeader="Venció"
-    badgeHeader="Hace"
-    query={useExpirations(selectExpired)}
-    badge={expiredBadge}
-    empty={
-      <EmptyState
-        icon={<IconTrashOff />}
-        title="Nada vencido"
-        description="No hay nada para descartar"
-      />
-    }
-  />
-);
+export const ExpiredList = () => {
+  const { t } = useTranslation();
+  return (
+    <ExpirationsCard
+      title={t('expirations.expiredTitle')}
+      dateHeader={t('expirations.expiredDate')}
+      badgeHeader={t('expirations.expiredAgo')}
+      query={useExpirations(selectExpired)}
+      badge={expiredBadge}
+      empty={
+        <EmptyState
+          icon={<IconTrashOff />}
+          title={t('expirations.expiredEmptyTitle')}
+          description={t('expirations.expiredEmptyText')}
+        />
+      }
+    />
+  );
+};

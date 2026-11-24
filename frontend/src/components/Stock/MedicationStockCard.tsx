@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { IconPencil, IconPill, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   ActionIcon,
@@ -27,11 +29,7 @@ import {
   toISODate,
   updateExistence,
 } from '../../api/medications';
-
-const formatDate = (iso: string) => {
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-};
+import { formatDate } from '../../i18n';
 
 const oneMonthFromToday = () => {
   const d = new Date();
@@ -39,15 +37,15 @@ const oneMonthFromToday = () => {
   return toISODate(d);
 };
 
-// Same thresholds as the buying list: within a month counts as "vence pronto".
-const expiryStatus = (dueDate: string) => {
+// Same thresholds as the buying list: within a month counts as "expiring soon".
+const expiryStatus = (dueDate: string, t: TFunction) => {
   if (dueDate < toISODate(new Date())) {
-    return { label: 'vencido', color: 'red' };
+    return { label: t('common.expired'), color: 'red' };
   }
   if (dueDate <= oneMonthFromToday()) {
-    return { label: 'vence pronto', color: 'orange' };
+    return { label: t('common.expiringSoon'), color: 'orange' };
   }
-  return { label: 'vigente', color: 'green' };
+  return { label: t('common.valid'), color: 'green' };
 };
 
 // Every change to stock affects the home cards, the lists and the detail page:
@@ -59,6 +57,7 @@ const useRefreshMedications = () => {
 
 // Fixing a typo in the due date: replaces the row until saved or cancelled.
 const EditDueDateForm = ({ existence, onDone }: { existence: Existence; onDone: () => void }) => {
+  const { t } = useTranslation();
   const refresh = useRefreshMedications();
   const [dueDate, setDueDate] = useState(existence.due_date);
 
@@ -85,7 +84,7 @@ const EditDueDateForm = ({ existence, onDone }: { existence: Existence; onDone: 
       <Group align="start" wrap="wrap" gap="xs">
         <TextInput
           type="date"
-          aria-label="Nueva fecha de vencimiento"
+          aria-label={t('stock.newDueDate')}
           // Focus lands on the date, so a keyboard user can type right away.
           autoFocus
           style={{ flex: 1, minWidth: 160 }}
@@ -96,14 +95,14 @@ const EditDueDateForm = ({ existence, onDone }: { existence: Existence; onDone: 
               onDone();
             }
           }}
-          error={!dueDate ? 'Falta la fecha' : save.error?.message}
+          error={!dueDate ? t('common.dateRequired') : save.error?.message}
         />
         <Group gap="xs" wrap="nowrap" ml="auto">
           <Button variant="default" size="sm" onClick={onDone} disabled={save.isPending}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button type="submit" size="sm" loading={save.isPending}>
-            Guardar
+            {t('common.save')}
           </Button>
         </Group>
       </Group>
@@ -112,10 +111,11 @@ const EditDueDateForm = ({ existence, onDone }: { existence: Existence; onDone: 
 };
 
 const StockRow = ({ existence }: { existence: Existence }) => {
+  const { t } = useTranslation();
   const [editingDate, setEditingDate] = useState(false);
   const refresh = useRefreshMedications();
   const [confirmOpened, setConfirmOpened] = useState(false);
-  const status = expiryStatus(existence.due_date);
+  const status = expiryStatus(existence.due_date, t);
 
   // onSuccess returns the refetch promise, so the mutation stays pending until fresh data
   // arrives: the switch never flickers back to the old value in between.
@@ -145,7 +145,7 @@ const StockRow = ({ existence }: { existence: Existence }) => {
             <ActionIcon
               variant="subtle"
               color="gray"
-              aria-label={`Corregir la fecha ${formatDate(existence.due_date)}`}
+              aria-label={t('stock.fixDate', { date: formatDate(existence.due_date) })}
               disabled={toggleLow.isPending || discard.isPending}
               onClick={() => setEditingDate(true)}
             >
@@ -158,7 +158,7 @@ const StockRow = ({ existence }: { existence: Existence }) => {
         </Group>
         <Group gap="sm" wrap="nowrap" ml="auto">
           <Switch
-            label="Queda poco"
+            label={t('common.lowAmount')}
             labelPosition="left"
             styles={{ label: { whiteSpace: 'nowrap' } }}
             // While saving (until the refetch ends, see onSuccess), show the new value.
@@ -182,7 +182,7 @@ const StockRow = ({ existence }: { existence: Existence }) => {
                 variant="subtle"
                 color="red"
                 size="lg"
-                aria-label={`Descartar el que vence el ${formatDate(existence.due_date)}`}
+                aria-label={t('stock.discardLabel', { date: formatDate(existence.due_date) })}
                 loading={discard.isPending}
                 onClick={() => setConfirmOpened((o) => !o)}
               >
@@ -191,10 +191,12 @@ const StockRow = ({ existence }: { existence: Existence }) => {
             </Popover.Target>
             <Popover.Dropdown>
               <Stack gap="xs">
-                <Text size="sm">¿Descartar el que vence el {formatDate(existence.due_date)}?</Text>
+                <Text size="sm">
+                  {t('stock.discardConfirm', { date: formatDate(existence.due_date) })}
+                </Text>
                 <Group gap="xs" justify="flex-end">
                   <Button size="xs" variant="default" onClick={() => setConfirmOpened(false)}>
-                    No
+                    {t('common.no')}
                   </Button>
                   <Button
                     size="xs"
@@ -204,7 +206,7 @@ const StockRow = ({ existence }: { existence: Existence }) => {
                       discard.mutate();
                     }}
                   >
-                    Descartar
+                    {t('stock.discard')}
                   </Button>
                 </Group>
               </Stack>
@@ -222,6 +224,7 @@ const StockRow = ({ existence }: { existence: Existence }) => {
 };
 
 const AddStockForm = ({ medicationId, onDone }: { medicationId: number; onDone: () => void }) => {
+  const { t } = useTranslation();
   const refresh = useRefreshMedications();
   const [dueDate, setDueDate] = useState('');
   const [lowAmount, setLowAmount] = useState(false);
@@ -250,15 +253,15 @@ const AddStockForm = ({ medicationId, onDone }: { medicationId: number; onDone: 
         <Group align="start" wrap="wrap" gap="sm">
           <TextInput
             type="date"
-            label="Vencimiento"
+            label={t('stock.expiration')}
             data-autofocus
             style={{ flex: 1, minWidth: 160 }}
             value={dueDate}
             onChange={(e) => setDueDate(e.currentTarget.value)}
-            error={showErrors && !dueDate && 'Falta la fecha'}
+            error={showErrors && !dueDate && t('common.dateRequired')}
           />
           <Checkbox
-            label="Queda poco"
+            label={t('common.lowAmount')}
             mt={34}
             checked={lowAmount}
             onChange={(e) => setLowAmount(e.currentTarget.checked)}
@@ -271,10 +274,10 @@ const AddStockForm = ({ medicationId, onDone }: { medicationId: number; onDone: 
         )}
         <Group justify="flex-end" gap="xs">
           <Button variant="default" size="xs" onClick={onDone} disabled={add.isPending}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button type="submit" size="xs" loading={add.isPending}>
-            Guardar
+            {t('common.save')}
           </Button>
         </Group>
       </Stack>
@@ -283,6 +286,7 @@ const AddStockForm = ({ medicationId, onDone }: { medicationId: number; onDone: 
 };
 
 export const MedicationStockCard = ({ medication }: { medication: Medication }) => {
+  const { t } = useTranslation();
   const [adding, setAdding] = useState(false);
 
   return (
@@ -304,13 +308,15 @@ export const MedicationStockCard = ({ medication }: { medication: Medication }) 
             onClick={() => setAdding(true)}
             style={{ flexShrink: 0 }}
           >
-            Agregar
+            {t('common.add')}
           </Button>
         )}
       </Group>
 
       <Stack gap="sm">
-        {medication.existences.length === 0 && !adding && <Text c="dimmed">Sin stock</Text>}
+        {medication.existences.length === 0 && !adding && (
+          <Text c="dimmed">{t('common.noStock')}</Text>
+        )}
         {/* The backend returns them sorted by due date. */}
         {medication.existences.map((e, i) => (
           <Stack key={e.id} gap="sm">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { IconPlus, IconSearch } from '@tabler/icons-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -26,6 +27,7 @@ interface MedicationSearchProps {
 }
 
 export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   // Wait until typing pauses so every keystroke doesn't fire a request.
   const [debounced] = useDebouncedValue(search.trim(), 300);
@@ -55,11 +57,11 @@ export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => 
   const addNew = () => goTo(`/medications/new?nombre=${encodeURIComponent(debounced)}`);
 
   return (
-    <Modal opened={opened} onClose={handleClose} title="Buscar medicamento">
+    <Modal opened={opened} onClose={handleClose} title={t('search.title')}>
       <Stack>
         <TextInput
           data-autofocus
-          placeholder="Nombre, droga, acción o tipo"
+          placeholder={t('search.placeholder')}
           leftSection={<IconSearch size={16} />}
           rightSection={isFetching ? <Loader size="xs" /> : null}
           value={search}
@@ -68,15 +70,15 @@ export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => 
 
         {!enabled ? (
           <Text size="sm" c="dimmed">
-            Escribí al menos {MIN_CHARS} letras
+            {t('search.minChars', { count: MIN_CHARS })}
           </Text>
         ) : error ? (
           <Text c="red">{error.message}</Text>
         ) : data?.length === 0 ? (
-          <EmptyState description={`No se encontró nada para ${debounced}`}>
+          <EmptyState description={t('search.noResults', { query: debounced })}>
             <EmptyStateActions>
               <Button variant="default" leftSection={<IconPlus size={16} />} onClick={addNew}>
-                Agregar medicamento
+                {t('search.addMedication')}
               </Button>
             </EmptyStateActions>
           </EmptyState>
@@ -100,7 +102,7 @@ export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => 
               onClick={addNew}
               style={{ alignSelf: 'start' }}
             >
-              {`Agregar nuevo medicamento "${debounced}"`}
+              {t('search.addNamed', { name: debounced })}
             </Button>
           </>
         )}

@@ -1,6 +1,7 @@
 import { type SubmitEvent, useEffect, useMemo, useState } from 'react';
 import { IconPhoto, IconPill, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   ActionIcon,
   Alert,
@@ -64,6 +65,7 @@ export const MedicationForm = ({
   onSubmit,
   onCancel,
 }: MedicationFormProps) => {
+  const { t } = useTranslation();
   const editing = medication !== undefined;
 
   const [name, setName] = useState(medication?.commercial_name ?? initialName);
@@ -105,10 +107,10 @@ export const MedicationForm = ({
 
   // A completely empty drug row is just ignored; a half-filled one is an error.
   const filledDrugs = drugs.filter((d) => d.name.trim() || d.dose.trim());
-  const nameError = name.trim() ? null : 'Ingresá el nombre';
+  const nameError = name.trim() ? null : t('form.nameRequired');
   const drugError = (d: DrugRow) => ({
-    name: !d.name.trim() && d.dose.trim() ? 'Falta la droga' : null,
-    dose: !d.dose.trim() && d.name.trim() ? 'Falta la dosis' : null,
+    name: !d.name.trim() && d.dose.trim() ? t('form.drugRequired') : null,
+    dose: !d.dose.trim() && d.name.trim() ? t('form.doseRequired') : null,
   });
   const duplicatedDrug = (d: DrugRow) =>
     d.name.trim() !== '' &&
@@ -139,7 +141,7 @@ export const MedicationForm = ({
         existences: existences.map(({ due_date, low_amount }) => ({ due_date, low_amount })),
       });
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'No se pudo guardar');
+      setSubmitError(e instanceof Error ? e.message : t('form.saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -150,22 +152,22 @@ export const MedicationForm = ({
       <Stack gap="lg">
         <Stack gap="sm">
           <TextInput
-            label="Nombre comercial"
-            placeholder="Tafirol 1G x 50"
+            label={t('form.name')}
+            placeholder={t('form.namePlaceholder')}
             required
             value={name}
             onChange={(e) => setName(e.currentTarget.value)}
             error={showErrors && nameError}
           />
           <TextInput
-            label="Tipo"
-            placeholder="Comprimidos, jarabe, crema…"
+            label={t('form.type')}
+            placeholder={t('form.typePlaceholder')}
             value={type}
             onChange={(e) => setType(e.currentTarget.value)}
           />
           <TextInput
-            label="Función"
-            placeholder="Analgésico, antifebril…"
+            label={t('form.function')}
+            placeholder={t('form.functionPlaceholder')}
             value={fn}
             onChange={(e) => setFn(e.currentTarget.value)}
           />
@@ -175,8 +177,12 @@ export const MedicationForm = ({
             </Avatar>
             <FileInput
               style={{ flex: 1 }}
-              label="Foto"
-              placeholder={editing && medication.picture_uri ? 'Cambiar foto' : 'Elegir una foto'}
+              label={t('form.picture')}
+              placeholder={
+                editing && medication.picture_uri
+                  ? t('form.changePicture')
+                  : t('form.choosePicture')
+              }
               accept="image/*"
               leftSection={<IconPhoto size={16} />}
               clearable
@@ -185,32 +191,34 @@ export const MedicationForm = ({
             />
           </Group>
           <Switch
-            label="De uso habitual"
-            description="Se tiene en cuenta para la lista de compra"
+            label={t('form.commonUse')}
+            description={t('form.commonUseHelp')}
             checked={commonUse}
             onChange={(e) => setCommonUse(e.currentTarget.checked)}
           />
         </Stack>
 
         <Stack gap="xs">
-          <Title order={4}>Composición</Title>
+          <Title order={4}>{t('form.composition')}</Title>
           {drugs.map((d) => {
             const errors = drugError(d);
             return (
               <Group key={d.key} align="start" wrap="nowrap" gap="xs">
                 <Autocomplete
                   style={{ flex: 2 }}
-                  aria-label="Droga"
-                  placeholder="Droga"
+                  aria-label={t('form.drug')}
+                  placeholder={t('form.drug')}
                   data={drugSuggestions}
                   value={d.name}
                   onChange={(value) => updateDrug(d.key, { name: value })}
-                  error={showErrors && (errors.name ?? (duplicatedDrug(d) ? 'Repetida' : null))}
+                  error={
+                    showErrors && (errors.name ?? (duplicatedDrug(d) ? t('form.duplicated') : null))
+                  }
                 />
                 <TextInput
                   style={{ flex: 1 }}
-                  aria-label="Dosis"
-                  placeholder="Dosis"
+                  aria-label={t('form.dose')}
+                  placeholder={t('form.dose')}
                   value={d.dose}
                   onChange={(e) => updateDrug(d.key, { dose: e.currentTarget.value })}
                   error={showErrors && errors.dose}
@@ -219,7 +227,7 @@ export const MedicationForm = ({
                   variant="subtle"
                   color="gray"
                   size="lg"
-                  aria-label="Quitar droga"
+                  aria-label={t('form.removeDrug')}
                   onClick={() => setDrugs((rows) => rows.filter((r) => r.key !== d.key))}
                 >
                   <IconTrash size={18} />
@@ -233,28 +241,28 @@ export const MedicationForm = ({
             onClick={() => setDrugs((rows) => [...rows, emptyDrug()])}
             style={{ alignSelf: 'start' }}
           >
-            Agregar droga
+            {t('form.addDrug')}
           </Button>
         </Stack>
 
         {!editing && (
           <Stack gap="xs">
-            <Title order={4}>Stock inicial</Title>
+            <Title order={4}>{t('form.initialStock')}</Title>
             <Text size="sm" c="dimmed">
-              Opcional: las unidades que ya tenés, con su vencimiento.
+              {t('form.initialStockHelp')}
             </Text>
             {existences.map((e) => (
               <Group key={e.key} align="center" wrap="nowrap" gap="xs">
                 <TextInput
                   style={{ flex: 1 }}
                   type="date"
-                  aria-label="Vencimiento"
+                  aria-label={t('form.expiration')}
                   value={e.due_date}
                   onChange={(ev) => updateExistence(e.key, { due_date: ev.currentTarget.value })}
-                  error={showErrors && !e.due_date && 'Falta la fecha'}
+                  error={showErrors && !e.due_date && t('common.dateRequired')}
                 />
                 <Checkbox
-                  label="Queda poco"
+                  label={t('common.lowAmount')}
                   checked={e.low_amount}
                   onChange={(ev) =>
                     updateExistence(e.key, { low_amount: ev.currentTarget.checked })
@@ -264,7 +272,7 @@ export const MedicationForm = ({
                   variant="subtle"
                   color="gray"
                   size="lg"
-                  aria-label="Quitar"
+                  aria-label={t('form.remove')}
                   onClick={() => setExistences((rows) => rows.filter((r) => r.key !== e.key))}
                 >
                   <IconTrash size={18} />
@@ -277,20 +285,20 @@ export const MedicationForm = ({
               onClick={() => setExistences((rows) => [...rows, emptyExistence()])}
               style={{ alignSelf: 'start' }}
             >
-              Agregar vencimiento
+              {t('form.addExpiration')}
             </Button>
           </Stack>
         )}
 
         {submitError && (
-          <Alert color="red" title="No se pudo guardar">
+          <Alert color="red" title={t('form.saveFailed')}>
             {submitError}
           </Alert>
         )}
 
         <Group justify="flex-end">
           <Button variant="default" onClick={onCancel} disabled={submitting}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button type="submit" loading={submitting}>
             {submitLabel}

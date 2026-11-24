@@ -7,6 +7,7 @@ import {
   IconQuestionMark,
 } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import {
   ActionIcon,
@@ -38,24 +39,23 @@ import {
   MedicationForm,
   type MedicationFormValues,
 } from '../components/Medications/MedicationForm';
+import { formatDate } from '../i18n';
 
-const formatDate = (iso: string) => {
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
+const BackLink = () => {
+  const { t } = useTranslation();
+  return (
+    <Anchor
+      component={Link}
+      to="/medications"
+      size="sm"
+      mb="sm"
+      display="inline-flex"
+      style={{ alignItems: 'center', gap: 4 }}
+    >
+      <IconArrowLeft size={16} /> {t('detail.back')}
+    </Anchor>
+  );
 };
-
-const BackLink = () => (
-  <Anchor
-    component={Link}
-    to="/medications"
-    size="sm"
-    mb="sm"
-    display="inline-flex"
-    style={{ alignItems: 'center', gap: 4 }}
-  >
-    <IconArrowLeft size={16} /> Medicamentos
-  </Anchor>
-);
 
 const Field = ({ label, value }: { label: string; value: string | null }) => (
   <div>
@@ -67,6 +67,7 @@ const Field = ({ label, value }: { label: string; value: string | null }) => (
 );
 
 const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit: () => void }) => {
+  const { t } = useTranslation();
   const today = toISODate(new Date());
 
   return (
@@ -80,35 +81,35 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
             <Title order={2}>{medication.commercial_name}</Title>
             {medication.common_use && (
               <Badge variant="light" style={{ alignSelf: 'start' }}>
-                Uso habitual
+                {t('detail.commonUse')}
               </Badge>
             )}
           </Stack>
-          <Tooltip label="Editar">
-            <ActionIcon variant="light" size="lg" aria-label="Editar" onClick={onEdit}>
+          <Tooltip label={t('common.edit')}>
+            <ActionIcon variant="light" size="lg" aria-label={t('common.edit')} onClick={onEdit}>
               <IconPencil size={20} />
             </ActionIcon>
           </Tooltip>
         </Group>
         <SimpleGrid cols={{ base: 1, xs: 2 }} mt="md">
-          <Field label="Tipo" value={medication.type} />
-          <Field label="Función" value={medication.function} />
+          <Field label={t('detail.type')} value={medication.type} />
+          <Field label={t('detail.function')} value={medication.function} />
         </SimpleGrid>
       </Card>
 
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
         <Card withBorder radius="md" padding="lg">
           <Title order={3} mb="md">
-            Composición
+            {t('detail.composition')}
           </Title>
           {medication.drugs.length === 0 ? (
-            <Text c="dimmed">Sin drogas cargadas</Text>
+            <Text c="dimmed">{t('detail.noDrugs')}</Text>
           ) : (
             <Table>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Droga</Table.Th>
-                  <Table.Th>Dosis</Table.Th>
+                  <Table.Th>{t('detail.drug')}</Table.Th>
+                  <Table.Th>{t('detail.dose')}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -125,7 +126,7 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
 
         <Card withBorder radius="md" padding="lg">
           <Group justify="space-between" mb="md">
-            <Title order={3}>Stock</Title>
+            <Title order={3}>{t('detail.stock')}</Title>
             <Button
               component={Link}
               to={`/stock?medicamento=${medication.id}`}
@@ -133,17 +134,17 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
               variant="light"
               rightSection={<IconArrowRight size={14} />}
             >
-              Gestionar
+              {t('detail.manage')}
             </Button>
           </Group>
           {medication.existences.length === 0 ? (
-            <Text c="dimmed">Sin stock</Text>
+            <Text c="dimmed">{t('common.noStock')}</Text>
           ) : (
             <Table>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Vence</Table.Th>
-                  <Table.Th>Estado</Table.Th>
+                  <Table.Th>{t('detail.expires')}</Table.Th>
+                  <Table.Th>{t('detail.status')}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -155,16 +156,16 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
                       <Group gap="xs">
                         {e.due_date < today ? (
                           <Badge color="red" variant="light">
-                            vencido
+                            {t('common.expired')}
                           </Badge>
                         ) : (
                           <Badge color="green" variant="light">
-                            vigente
+                            {t('common.valid')}
                           </Badge>
                         )}
                         {e.low_amount && (
                           <Badge color="orange" variant="light">
-                            queda poco
+                            {t('common.lowAmount')}
                           </Badge>
                         )}
                       </Group>
@@ -181,6 +182,7 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
 };
 
 export function MedicationDetailPage() {
+  const { t } = useTranslation();
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const queryClient = useQueryClient();
@@ -219,8 +221,8 @@ export function MedicationDetailPage() {
     content = (
       <EmptyState
         icon={<IconQuestionMark />}
-        title="Medicamento no encontrado"
-        description="Puede que la dirección esté mal escrita."
+        title={t('detail.notFoundTitle')}
+        description={t('detail.notFoundText')}
       />
     );
   } else if (error) {
@@ -236,11 +238,11 @@ export function MedicationDetailPage() {
     content = (
       <Card withBorder radius="md" padding="lg" maw={720}>
         <Title order={2} mb="md">
-          Editar medicamento
+          {t('medications.editTitle')}
         </Title>
         <MedicationForm
           medication={data}
-          submitLabel="Guardar"
+          submitLabel={t('common.save')}
           onSubmit={handleSubmit}
           onCancel={() => setEditing(false)}
         />

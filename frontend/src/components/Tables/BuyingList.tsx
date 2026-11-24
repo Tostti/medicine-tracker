@@ -1,9 +1,10 @@
 import { IconCheck } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Badge, EmptyState, Group, List, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { fetchMedications, type Medication, toISODate } from '../../api/medications';
 
-type BuyingReason = 'sin stock' | 'vencido' | 'queda poco' | 'vence pronto';
+type BuyingReason = 'noStock' | 'expired' | 'lowAmount' | 'expiringSoon';
 
 interface BuyingItem {
   medication: Medication;
@@ -11,10 +12,10 @@ interface BuyingItem {
 }
 
 const reasonColor: Record<BuyingReason, string> = {
-  'sin stock': 'red',
-  vencido: 'red',
-  'queda poco': 'orange',
-  'vence pronto': 'yellow',
+  noStock: 'red',
+  expired: 'red',
+  lowAmount: 'orange',
+  expiringSoon: 'yellow',
 };
 
 const oneMonthFromToday = () => {
@@ -25,21 +26,21 @@ const oneMonthFromToday = () => {
 
 const getBuyingReasons = (m: Medication, today: string, limit: string): BuyingReason[] => {
   if (m.existences.length === 0) {
-    return ['sin stock'];
+    return ['noStock'];
   }
 
   // Expired existences don't count as stock: only the valid ones are checked below.
   const valid = m.existences.filter((e) => e.due_date >= today);
   if (valid.length === 0) {
-    return ['vencido'];
+    return ['expired'];
   }
 
   const reasons: BuyingReason[] = [];
   if (valid.every((e) => e.due_date <= limit)) {
-    reasons.push('vence pronto');
+    reasons.push('expiringSoon');
   }
   if (valid.length === 1 && valid[0].low_amount) {
-    reasons.push('queda poco');
+    reasons.push('lowAmount');
   }
   return reasons;
 };
@@ -56,6 +57,7 @@ const toBuyingList = (medications: Medication[]): BuyingItem[] => {
 const filters = { common_use: true };
 
 const BuyingList = () => {
+  const { t } = useTranslation();
   const { isPending, error, data } = useQuery({
     queryKey: ['medications', filters],
     queryFn: () => fetchMedications(filters),
@@ -65,7 +67,7 @@ const BuyingList = () => {
   return (
     <>
       <Title order={3} mb="md">
-        Lista de compra
+        {t('buyingList.title')}
       </Title>
 
       {isPending ? (
@@ -80,8 +82,8 @@ const BuyingList = () => {
       ) : data.length === 0 ? (
         <EmptyState
           icon={<IconCheck />}
-          title="Nada que comprar"
-          description="Todos los medicamentos necesarios están en buenas condiciones"
+          title={t('buyingList.emptyTitle')}
+          description={t('buyingList.emptyText')}
         />
       ) : (
         <List>
@@ -91,7 +93,7 @@ const BuyingList = () => {
                 <Text>{medication.commercial_name}</Text>
                 {reasons.map((reason) => (
                   <Badge key={reason} color={reasonColor[reason]} variant="light">
-                    {reason}
+                    {t(`common.${reason}`)}
                   </Badge>
                 ))}
               </Group>

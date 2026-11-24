@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from 'react';
 import { IconCloudOff } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Alert } from '@mantine/core';
 import { useNetwork } from '@mantine/hooks';
+import { locale } from '../../i18n';
 
 /**
  * Tells the user they're looking at saved data, and from when.
@@ -12,6 +14,7 @@ import { useNetwork } from '@mantine/hooks';
  * that second case; HTTP errors like 404 or 422 come back as responses, so they don't count.
  */
 export function OfflineBanner() {
+  const { t } = useTranslation();
   const { online } = useNetwork();
   const queryCache = useQueryClient().getQueryCache();
   const subscribe = (onChange: () => void) => queryCache.subscribe(onChange);
@@ -34,12 +37,12 @@ export function OfflineBanner() {
       variant="light"
       color="yellow"
       icon={<IconCloudOff size={18} />}
-      title={online ? 'Can’t reach the server' : 'You’re offline'}
+      title={online ? t('offline.unreachable') : t('offline.offline')}
       mb="md"
     >
       {lastUpdated > 0
-        ? `Showing data saved on ${new Date(lastUpdated).toLocaleString()}. Changes can’t be saved until the connection is back.`
-        : 'No saved data yet: open the app once while connected to keep a copy.'}
+        ? t('offline.savedOn', { date: new Date(lastUpdated).toLocaleString(locale()) })
+        : t('offline.nothingSaved')}
     </Alert>
   );
 }

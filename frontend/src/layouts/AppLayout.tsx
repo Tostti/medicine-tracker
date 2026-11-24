@@ -1,4 +1,5 @@
 import { IconHome, IconPackage, IconPill, IconSearch } from '@tabler/icons-react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Outlet, NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 import {
   ActionIcon,
@@ -23,12 +24,13 @@ const isActive = (pathname: string, to: string) =>
   to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`);
 
 const links = [
-  { to: '/', label: 'Home', icon: IconHome },
-  { to: '/medications', label: 'Medications', icon: IconPill },
-  { to: '/stock', label: 'Stock', icon: IconPackage },
-];
+  { to: '/', label: 'nav.home', icon: IconHome },
+  { to: '/medications', label: 'nav.medications', icon: IconPill },
+  { to: '/stock', label: 'nav.stock', icon: IconPackage },
+] as const;
 
 export function AppLayout() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const [searchOpened, search] = useDisclosure(false);
 
@@ -54,22 +56,32 @@ export function AppLayout() {
               key={to}
               component={RouterNavLink}
               to={to}
-              label={label}
+              label={t(label)}
               leftSection={<Icon size={18} />}
               active={isActive(pathname, to)}
             />
           ))}
           {/* Required by the icon's CC BY 4.0 license */}
           <Text size="xs" c="dimmed" mt="auto">
-            Pill icon by Vaadin on{' '}
-            <Anchor href="https://icon-icons.com/authors/353-vaadin" target="_blank" inherit>
-              Icon-Icons.com
-            </Anchor>{' '}
-            (
-            <Anchor href="https://creativecommons.org/licenses/by/4.0/" target="_blank" inherit>
-              CC BY 4.0
-            </Anchor>
-            )
+            <Trans
+              i18nKey="credit"
+              components={{
+                site: (
+                  <Anchor
+                    href="https://icon-icons.com/authors/353-vaadin"
+                    target="_blank"
+                    inherit
+                  />
+                ),
+                license: (
+                  <Anchor
+                    href="https://creativecommons.org/licenses/by/4.0/"
+                    target="_blank"
+                    inherit
+                  />
+                ),
+              }}
+            />
           </Text>
         </Stack>
       </AppShell.Navbar>
@@ -96,7 +108,7 @@ export function AppLayout() {
                   c={active ? 'blue' : 'dimmed'}
                 >
                   <Icon size={24} />
-                  <Text size="xs">{label}</Text>
+                  <Text size="xs">{t(label)}</Text>
                 </Stack>
               </UnstyledButton>
             );
@@ -110,7 +122,7 @@ export function AppLayout() {
           size={56}
           radius="xl"
           variant="filled"
-          aria-label="Buscar medicamento"
+          aria-label={t('nav.search')}
           onClick={search.open}
         >
           <IconSearch size={28} />

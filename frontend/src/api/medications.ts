@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 // Relative by default: the same server that serves the page proxies /api to the backend,
 // so this works from any device without knowing the host.
 const API_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -60,7 +62,7 @@ export const fetchMedications = async (filters: MedicationFilters = {}): Promise
 
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error('Failed to fetch medications');
+    throw new Error(i18n.t('api.fetchMedications'));
   }
   return response.json();
 };
@@ -70,10 +72,10 @@ export class NotFoundError extends Error {}
 export const fetchMedication = async (id: number): Promise<Medication> => {
   const response = await fetch(`${API_URL}/medications/${id}`);
   if (response.status === 404) {
-    throw new NotFoundError('Medicamento no encontrado');
+    throw new NotFoundError(i18n.t('api.medicationNotFound'));
   }
   if (!response.ok) {
-    throw new Error('Failed to fetch medication');
+    throw new Error(i18n.t('api.fetchMedication'));
   }
   return response.json();
 };
@@ -82,7 +84,7 @@ export const fetchMedication = async (id: number): Promise<Medication> => {
 export const fetchDrugs = async (): Promise<Drug[]> => {
   const response = await fetch(`${API_URL}/drugs/?limit=1000`);
   if (!response.ok) {
-    throw new Error('Failed to fetch drugs');
+    throw new Error(i18n.t('api.fetchDrugs'));
   }
   return response.json();
 };
@@ -116,7 +118,7 @@ export const updateMedication = async (
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'Failed to update medication'));
+    throw new Error(await errorDetail(response, i18n.t('api.updateMedication')));
   }
   return response.json();
 };
@@ -128,7 +130,7 @@ export const createMedication = async (payload: MedicationCreate): Promise<Medic
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'Failed to create medication'));
+    throw new Error(await errorDetail(response, i18n.t('api.createMedication')));
   }
   return response.json();
 };
@@ -152,7 +154,7 @@ export const uploadImage = async (file: File): Promise<string> => {
   // No Content-Type header: the browser sets multipart/form-data with its boundary.
   const response = await fetch(`${API_URL}/images/`, { method: 'POST', body: form });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'Failed to upload image'));
+    throw new Error(await errorDetail(response, i18n.t('api.uploadImage')));
   }
   const { key } = (await response.json()) as { key: string };
   return key;
@@ -167,7 +169,7 @@ export const setMedicationPicture = async (id: number, file: File): Promise<Medi
     body: form,
   });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'Failed to update picture'));
+    throw new Error(await errorDetail(response, i18n.t('api.updatePicture')));
   }
   return response.json();
 };
@@ -190,7 +192,7 @@ export const addExistence = async (
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'No se pudo agregar el stock'));
+    throw new Error(await errorDetail(response, i18n.t('api.addStock')));
   }
   return response.json();
 };
@@ -205,7 +207,7 @@ export const updateExistence = async (
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'No se pudo actualizar el stock'));
+    throw new Error(await errorDetail(response, i18n.t('api.updateStock')));
   }
   return response.json();
 };
@@ -213,6 +215,6 @@ export const updateExistence = async (
 export const deleteExistence = async (id: number): Promise<void> => {
   const response = await fetch(`${API_URL}/existences/${id}`, { method: 'DELETE' });
   if (!response.ok) {
-    throw new Error(await errorDetail(response, 'No se pudo descartar'));
+    throw new Error(await errorDetail(response, i18n.t('api.discard')));
   }
 };

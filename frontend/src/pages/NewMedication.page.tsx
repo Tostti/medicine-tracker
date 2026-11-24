@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Title } from '@mantine/core';
 import { createMedication, uploadImage } from '../api/medications';
@@ -10,6 +11,7 @@ import {
 export function NewMedicationPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   // Coming from a search with no results: ?nombre=... prefills the name.
   const [params] = useSearchParams();
 
@@ -36,11 +38,11 @@ export function NewMedicationPage() {
   return (
     <Card withBorder radius="md" padding="lg" maw={720}>
       <Title order={2} mb="md">
-        Nuevo medicamento
+        {t('medications.new')}
       </Title>
       <MedicationForm
         initialName={params.get('nombre') ?? ''}
-        submitLabel="Crear"
+        submitLabel={t('medications.create')}
         onSubmit={handleSubmit}
         onCancel={() => navigate('/medications')}
       />

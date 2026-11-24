@@ -1,8 +1,10 @@
 import { IconAlertTriangle, IconMapPinOff } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom';
 import { Button, Center, Code, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 
 export function ErrorPage() {
+  const { t } = useTranslation();
   const error = useRouteError();
   const notFound = isRouteErrorResponse(error) && error.status === 404;
   const Icon = notFound ? IconMapPinOff : IconAlertTriangle;
@@ -17,22 +19,20 @@ export function ErrorPage() {
           <Icon size={36} />
         </ThemeIcon>
         <Title order={2} ta="center">
-          {notFound ? 'Página no encontrada' : 'Algo salió mal'}
+          {notFound ? t('error.notFoundTitle') : t('error.crashTitle')}
         </Title>
         <Text c="dimmed" ta="center">
-          {notFound
-            ? 'La dirección que abriste no existe.'
-            : 'Ocurrió un error inesperado al mostrar esta página.'}
+          {notFound ? t('error.notFoundText') : t('error.crashText')}
         </Text>
         {detail && <Code block>{detail}</Code>}
         <Group>
           {!notFound && (
             <Button variant="default" onClick={() => window.location.reload()}>
-              Reintentar
+              {t('error.retry')}
             </Button>
           )}
           <Button component={Link} to="/">
-            Ir al inicio
+            {t('error.goHome')}
           </Button>
         </Group>
       </Stack>
