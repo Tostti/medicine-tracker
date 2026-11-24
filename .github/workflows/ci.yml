@@ -1,0 +1,83 @@
+# Tests for every pull request (required to merge into main) and for main itself.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A new push to the same PR cancels the run that is now outdated.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    # Job names are what the branch rules require: keep them in sync if renamed.
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    # Same PostgreSQL as docker-compose: the tests use unaccent, lower() indexes and ILIKE.
+    services:
+      db:
+        image: postgres:19
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # What .env provides locally. tests/conftest.py replaces the database name with its
+    # own *_test database, which it creates and migrates on every run.
+    env:
+      POSTGRES_USER: ci
+      POSTGRES_PASSWORD: ci
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ci
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.15' # same as the backend image
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - run: pytest
+
+  frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26 # same as the frontend image
+
+      # Node 25+ no longer bundles corepack; it provides the Yarn version pinned in package.json.
+      - run: npm install -g corepack && corepack enable
+
+      - run: yarn install --immutable
+
+      # Formatting, lint, types, unused code (knip), unit tests and the production build.
+      - run: yarn test
