@@ -5,6 +5,7 @@ import { HomePage } from './pages/Home.page';
 import { MedicationDetailPage } from './pages/MedicationDetail.page';
 import { MedicationsPage } from './pages/Medications.page';
 import { NewMedicationPage } from './pages/NewMedication.page';
+import { StockPage } from './pages/Stock.page';
 
 const router = createBrowserRouter([
   {
@@ -21,8 +22,7 @@ const router = createBrowserRouter([
           // 'new' is matched before ':id', so it never reaches the detail page.
           { path: '/medications/new', element: <NewMedicationPage /> },
           { path: '/medications/:id', element: <MedicationDetailPage /> },
-          // Placeholder until the real page exists
-          { path: '/stock', element: <h2>Stock</h2> },
+          { path: '/stock', element: <StockPage /> },
           // Any other address: a 404, shown by the error page above.
           {
             path: '*',

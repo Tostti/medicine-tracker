@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconPencil,
+  IconPill,
+  IconQuestionMark,
+} from '@tabler/icons-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useParams } from 'react-router-dom';
+import {
   ActionIcon,
   Anchor,
   Avatar,
   Badge,
+  Button,
   Card,
   EmptyState,
   Group,
@@ -15,9 +25,6 @@ import {
   Title,
   Tooltip,
 } from '@mantine/core';
-import { IconArrowLeft, IconPencil, IconPill, IconQuestionMark } from '@tabler/icons-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
 import {
   fetchMedication,
   type Medication,
@@ -27,7 +34,10 @@ import {
   toISODate,
   updateMedication,
 } from '../api/medications';
-import { MedicationForm, type MedicationFormValues } from '../components/Medications/MedicationForm';
+import {
+  MedicationForm,
+  type MedicationFormValues,
+} from '../components/Medications/MedicationForm';
 
 const formatDate = (iso: string) => {
   const [y, m, d] = iso.split('-');
@@ -35,7 +45,14 @@ const formatDate = (iso: string) => {
 };
 
 const BackLink = () => (
-  <Anchor component={Link} to="/medications" size="sm" mb="sm" display="inline-flex" style={{ alignItems: 'center', gap: 4 }}>
+  <Anchor
+    component={Link}
+    to="/medications"
+    size="sm"
+    mb="sm"
+    display="inline-flex"
+    style={{ alignItems: 'center', gap: 4 }}
+  >
     <IconArrowLeft size={16} /> Medicamentos
   </Anchor>
 );
@@ -107,9 +124,18 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
         </Card>
 
         <Card withBorder radius="md" padding="lg">
-          <Title order={3} mb="md">
-            Stock
-          </Title>
+          <Group justify="space-between" mb="md">
+            <Title order={3}>Stock</Title>
+            <Button
+              component={Link}
+              to={`/stock?medicamento=${medication.id}`}
+              size="xs"
+              variant="light"
+              rightSection={<IconArrowRight size={14} />}
+            >
+              Gestionar
+            </Button>
+          </Group>
           {medication.existences.length === 0 ? (
             <Text c="dimmed">Sin stock</Text>
           ) : (

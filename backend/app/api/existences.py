@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.existence import ExistenceUpdate
+from app.schemas.existence import ExistenceRead, ExistenceUpdate
 from app.services import existence as existence_service
 
 router = APIRouter(
@@ -22,7 +22,7 @@ def delete_existence(
     existence_service.delete_existence(db, existence)
 
 
-@router.patch("/{existence_id}", status_code=status.HTTP_200_OK)
+@router.patch("/{existence_id}", response_model=ExistenceRead, status_code=status.HTTP_200_OK)
 def update_existence(
     payload: ExistenceUpdate,
     existence_id: int,

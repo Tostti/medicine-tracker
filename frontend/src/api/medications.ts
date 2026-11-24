@@ -45,7 +45,9 @@ export interface Medication {
 export const fetchMedications = async (filters: MedicationFilters = {}): Promise<Medication[]> => {
   // new URL() needs a base when API_URL is relative like '/api'.
   const url = new URL(`${API_URL}/medications/`, window.location.origin);
-  if (filters.q) url.searchParams.set('q', filters.q);
+  if (filters.q) {
+    url.searchParams.set('q', filters.q);
+  }
   if (filters.common_use !== undefined) {
     url.searchParams.set('common_use', String(filters.common_use));
   }
@@ -57,7 +59,9 @@ export const fetchMedications = async (filters: MedicationFilters = {}): Promise
   }
 
   const response = await fetch(url);
-  if (!response.ok) throw new Error('Failed to fetch medications');
+  if (!response.ok) {
+    throw new Error('Failed to fetch medications');
+  }
   return response.json();
 };
 
@@ -102,7 +106,10 @@ export interface MedicationCreate {
 // PATCH: only the fields sent change. `drugs`, if sent, replaces the whole list.
 export type MedicationUpdate = Partial<Omit<MedicationCreate, 'existences'>>;
 
-export const updateMedication = async (id: number, payload: MedicationUpdate): Promise<Medication> => {
+export const updateMedication = async (
+  id: number,
+  payload: MedicationUpdate
+): Promise<Medication> => {
   const response = await fetch(`${API_URL}/medications/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -120,15 +127,21 @@ export const createMedication = async (payload: MedicationCreate): Promise<Medic
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error(await errorDetail(response, 'Failed to create medication'));
+  if (!response.ok) {
+    throw new Error(await errorDetail(response, 'Failed to create medication'));
+  }
   return response.json();
 };
 
 // picture_uri is either an external URL (kept as is) or a key from our storage,
 // served by the backend at /images/{key}.
 export const pictureSrc = (pictureUri: string | null): string | null => {
-  if (!pictureUri) return null;
-  if (/^https?:\/\//.test(pictureUri)) return pictureUri;
+  if (!pictureUri) {
+    return null;
+  }
+  if (/^https?:\/\//.test(pictureUri)) {
+    return pictureUri;
+  }
   return `${API_URL}/images/${pictureUri}`;
 };
 
@@ -138,7 +151,9 @@ export const uploadImage = async (file: File): Promise<string> => {
   form.append('file', file);
   // No Content-Type header: the browser sets multipart/form-data with its boundary.
   const response = await fetch(`${API_URL}/images/`, { method: 'POST', body: form });
-  if (!response.ok) throw new Error(await errorDetail(response, 'Failed to upload image'));
+  if (!response.ok) {
+    throw new Error(await errorDetail(response, 'Failed to upload image'));
+  }
   const { key } = (await response.json()) as { key: string };
   return key;
 };
@@ -151,7 +166,9 @@ export const setMedicationPicture = async (id: number, file: File): Promise<Medi
     method: 'PUT',
     body: form,
   });
-  if (!response.ok) throw new Error(await errorDetail(response, 'Failed to update picture'));
+  if (!response.ok) {
+    throw new Error(await errorDetail(response, 'Failed to update picture'));
+  }
   return response.json();
 };
 
@@ -159,4 +176,43 @@ export const setMedicationPicture = async (id: number, file: File): Promise<Medi
 export const toISODate = (d: Date) => {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+// --- Stock (existences) ---
+
+export const addExistence = async (
+  medicationId: number,
+  payload: Omit<Existence, 'id'>
+): Promise<Existence> => {
+  const response = await fetch(`${API_URL}/medications/${medicationId}/existences`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await errorDetail(response, 'No se pudo agregar el stock'));
+  }
+  return response.json();
+};
+
+export const updateExistence = async (
+  id: number,
+  payload: Partial<Omit<Existence, 'id'>>
+): Promise<Existence> => {
+  const response = await fetch(`${API_URL}/existences/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(await errorDetail(response, 'No se pudo actualizar el stock'));
+  }
+  return response.json();
+};
+
+export const deleteExistence = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_URL}/existences/${id}`, { method: 'DELETE' });
+  if (!response.ok) {
+    throw new Error(await errorDetail(response, 'No se pudo descartar'));
+  }
 };

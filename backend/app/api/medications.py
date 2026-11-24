@@ -101,6 +101,8 @@ def create_medication_existence(
     medication_id: int,
     db: Session = Depends(get_db),
 ):
+    if medication_service.get_medication(db, medication_id) is None:
+        raise HTTPException(status_code=404, detail="Medication not found")
     return existence_service.add_existence(db, medication_id, payload)
 
 
