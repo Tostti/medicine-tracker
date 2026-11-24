@@ -21,7 +21,7 @@ export interface Drug {
   name: string;
 }
 
-export interface MedicationDrug {
+interface MedicationDrug {
   dose: string;
   drug: Drug;
 }
@@ -91,9 +91,7 @@ export const fetchDrugs = async (): Promise<Drug[]> => {
 
 // A drug for a new medication: an existing one by id, or by name
 // (the backend reuses a drug with that name, ignoring case, or creates it).
-export type MedicationDrugCreate =
-  | { drug_id: number; dose: string }
-  | { name: string; dose: string };
+type MedicationDrugCreate = { drug_id: number; dose: string } | { name: string; dose: string };
 
 export interface MedicationCreate {
   commercial_name: string;

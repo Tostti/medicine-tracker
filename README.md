@@ -86,6 +86,39 @@ docker compose up -d db  # the tests use the credentials in .env, on localhost
 Backend changes need a rebuild of its container (`docker compose up -d --build backend`).
 New migrations: `alembic revision --autogenerate -m "..."` inside `backend/`.
 
+### Pull requests and CI
+
+`main` only changes through pull requests, and a pull request can only be merged
+when both test jobs pass ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
+
+- **Backend tests**: `pytest` against a PostgreSQL service container.
+- **Frontend tests**: `yarn test`.
+
+Pull requests also build both Docker images, without publishing them, so a broken
+Dockerfile shows up before merging.
+
+## Installing on a server
+
+The server doesn't need the source code. Every merge into `main` publishes the images
+to GitHub's container registry ([`.github/workflows/docker.yml`](.github/workflows/docker.yml)):
+
+- `ghcr.io/tostti/medicine-tracker-backend`
+- `ghcr.io/tostti/medicine-tracker-web`
+
+each tagged `latest`, `sha-<commit>`, and the version for tags like `v1.2.0`.
+They are built for `linux/amd64`.
+
+On the server, in a folder with just `docker-compose.yml` and a `.env` made from
+[`.env.example`](.env.example):
+
+```sh
+docker compose pull
+docker compose up -d --no-build
+```
+
+Run the same two commands to update. `--no-build` uses the published images instead of
+looking for the source; set `IMAGE_TAG` in `.env` to pin a version (or roll back to one).
+
 ## Deploying behind HTTPS
 
 The `web` container serves plain HTTP on `WEB_PORT` (8090) and expects a reverse proxy

@@ -31,7 +31,9 @@ services:
         condition: service_healthy
 
   backend:
+    # Built locally from ./backend, or pulled from GHCR (published by .github/workflows/docker.yml).
     build: ./backend
+    image: ghcr.io/tostti/medicine-tracker-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file: .env
     environment:
@@ -52,6 +54,7 @@ services:
 
   web:
     build: ./frontend
+    image: ghcr.io/tostti/medicine-tracker-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     # WEB_BIND=127.0.0.1 when the reverse proxy runs on this same host (not in Docker),
     # so the app can't be reached over plain HTTP from outside.
