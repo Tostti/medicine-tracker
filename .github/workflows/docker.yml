@@ -1,0 +1,70 @@
+# Builds the backend and web images.
+# - Pull requests: build only, to catch a broken Dockerfile before merging.
+# - main: publish to GHCR as :latest and :sha-<commit>.
+# - Tags like v1.2.3: publish as :1.2.3 too.
+#
+# The server only needs docker-compose.yml and .env, then `docker compose pull`.
+name: Docker images
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+  packages: write # push to ghcr.io/<owner>/...
+
+jobs:
+  image:
+    name: Image (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            context: backend
+          - service: web
+            context: frontend
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Image names must be lowercase; the owner (Tostti) isn't.
+      - name: Image name
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/medicine-tracker-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+
+      # Tags, plus OCI labels that link the package to this repo (it inherits the repo's visibility).
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short
+            type=semver,pattern={{version}}
+            type=ref,event=pr
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Reuse unchanged layers (dependency installs) between runs.
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
