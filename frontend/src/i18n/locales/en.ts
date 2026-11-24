@@ -22,7 +22,8 @@ export const en = {
     search: 'Search medication',
   },
   // <site> and <license> become links.
-  credit: 'Pill icon by Vaadin on <site>Icon-Icons.com</site> (<license>CC BY 4.0</license>)',
+  credit:
+    'Pill icon by Vaadin on <site>Icon-Icons.com</site> (<license>CC BY 4.0</license>), colors adapted',
   offline: {
     unreachable: 'Can’t reach the server',
     offline: 'You’re offline',

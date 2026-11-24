@@ -21,4 +21,4 @@ In Docker, the app is built and served by Caddy, which also proxies `/api` to th
 
 ## Credits
 
-Pill icon by Vaadin on [Icon-Icons.com](https://icon-icons.com/authors/353-vaadin), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Pill icon by Vaadin on [Icon-Icons.com](https://icon-icons.com/authors/353-vaadin), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Modified: `public/pill.svg` switches its color in dark mode, and the PNG app icons are rendered from it on a white background.

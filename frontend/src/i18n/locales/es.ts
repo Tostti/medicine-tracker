@@ -23,7 +23,7 @@ export const es: typeof en = {
     search: 'Buscar medicamento',
   },
   credit:
-    'Ícono de pastilla de Vaadin en <site>Icon-Icons.com</site> (<license>CC BY 4.0</license>)',
+    'Ícono de pastilla de Vaadin en <site>Icon-Icons.com</site> (<license>CC BY 4.0</license>), colores adaptados',
   offline: {
     unreachable: 'No se puede conectar con el servidor',
     offline: 'Estás sin conexión',
