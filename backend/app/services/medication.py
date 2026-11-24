@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from datetime import date
 
@@ -7,6 +8,10 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Drug, Existence, Medication, MedicationDrug
 from app.schemas.medication import MedicationCreate
 from app.services import drug as drug_service
+from app.services import image as image_service
+from app.services import storage
+
+logger = logging.getLogger(__name__)
 
 
 def _contains(column, term: str) -> ColumnElement[bool]:
@@ -111,3 +116,19 @@ def create_medication(db: Session, payload: MedicationCreate) -> Medication:
 
     db.refresh(db_item)
     return db_item
+
+
+def set_picture(db: Session, medication: Medication, data: bytes) -> Medication:
+    """Upload a new picture and replace the old one, deleting it if it was ours."""
+    old = medication.picture_uri
+    medication.picture_uri = image_service.store_image(data)
+    db.commit()
+    db.refresh(medication)
+
+    # After the commit, so a failure here never loses the new picture.
+    if old and image_service.is_image_key(old):
+        try:
+            storage.delete_object(old)
+        except Exception:
+            logger.warning("Couldn't delete old picture %s", old, exc_info=True)
+    return medication

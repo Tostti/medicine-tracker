@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.api.images import read_upload, storage_errors
 from app.db.database import get_db
 from app.schemas.medication import MedicationDetail, MedicationCreate
 from app.schemas.existence import ExistenceRead, ExistenceCreate
@@ -95,3 +96,21 @@ def create_medication(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
         )
+
+
+@router.put(
+    "/{medication_id}/picture",
+    response_model=MedicationDetail,
+    status_code=status.HTTP_200_OK,
+)
+def set_medication_picture(
+    medication_id: int,
+    file: UploadFile,
+    db: Session = Depends(get_db),
+):
+    medication = medication_service.get_medication(db, medication_id)
+    if medication is None:
+        raise HTTPException(status_code=404, detail="Medication not found")
+    data = read_upload(file)
+    with storage_errors():
+        return medication_service.set_picture(db, medication, data)

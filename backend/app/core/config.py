@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int
     POSTGRES_DB: str
 
+    S3_ENDPOINT_URL: str | None = None
+    S3_REGION: str = "us-east-1"
+    S3_BUCKET: str | None = None
+    S3_ACCESS_KEY: str | None = None
+    S3_SECRET_KEY: str | None = None
+    S3_CREATE_BUCKET: bool = False
+
     @property
     def database_url(self) -> PostgresDsn:
         return str(
