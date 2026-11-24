@@ -15,6 +15,7 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { OfflineBanner } from '../components/Offline/OfflineBanner';
 import { MedicationSearch } from '../components/Search/MedicationSearch';
 
 // Home only on its own address; the rest also on their sub-pages (/medications/5).
@@ -74,6 +75,7 @@ export function AppLayout() {
       </AppShell.Navbar>
 
       <AppShell.Main>
+        <OfflineBanner />
         <Outlet />
         {/* Room to scroll the end of a page clear of the floating search button (56px + 20px gap). */}
         <Box h={80} />
