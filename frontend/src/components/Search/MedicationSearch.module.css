@@ -1,0 +1,21 @@
+.result {
+  display: block;
+  width: 100%;
+  padding: var(--mantine-spacing-xs);
+  border-radius: var(--mantine-radius-md);
+  /* Mantine buttons keep the arrow cursor by default; a result is a link, so show the hand. */
+  cursor: pointer;
+  transition: background-color 120ms ease;
+
+  /* Only on devices with a real pointer: on touch screens hover would stay "stuck" after a tap.
+     gray-1, not gray-0: gray-0 is nearly identical to the modal's white background.
+     Every text inside keeps at least 4.5:1 on these backgrounds (see cssVariablesResolver in theme.ts):
+     in dark mode, dark-6/dark-5 rather than lighter shades, which would sink the dimmed text below it. */
+  @mixin hover {
+    background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  }
+
+  &:active {
+    background-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  }
+}

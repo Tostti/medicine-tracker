@@ -5,7 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { MantineProvider } from '@mantine/core';
 import { Router } from './Router';
-import { theme } from './theme';
+import { cssVariablesResolver, theme } from './theme';
 
 // How long cached results survive (in memory and in localStorage) to be shown offline.
 const CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -26,7 +26,7 @@ const persister = createAsyncStoragePersister({ storage: window.localStorage });
 
 export default function App() {
   return (
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver}>
       <PersistQueryClientProvider
         client={queryClient}
         persistOptions={{

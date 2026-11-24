@@ -1,11 +1,22 @@
 import { useState } from 'react';
-import { Button, EmptyState, EmptyStateActions, Loader, Modal, Stack, Text, TextInput, UnstyledButton } from '@mantine/core';
-import { useDebouncedValue } from '@mantine/hooks';
 import { IconPlus, IconSearch } from '@tabler/icons-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  EmptyState,
+  EmptyStateActions,
+  Loader,
+  Modal,
+  Stack,
+  Text,
+  TextInput,
+  UnstyledButton,
+} from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
 import { fetchMedications } from '../../api/medications';
 import { MedicationItem } from '../Medications/MedicationItem';
+import classes from './MedicationSearch.module.css';
 
 const MIN_CHARS = 2;
 
@@ -23,7 +34,7 @@ export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => 
   const { data, error, isFetching } = useQuery({
     // Each search term is cached on its own, under the medications prefix.
     queryKey: ['medications', 'search', debounced],
-    queryFn: () => fetchMedications({q:debounced}),
+    queryFn: () => fetchMedications({ q: debounced }),
     enabled,
     // Keep showing the previous results while the next ones load, instead of flashing empty.
     placeholderData: keepPreviousData,
@@ -62,24 +73,36 @@ export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => 
         ) : error ? (
           <Text c="red">{error.message}</Text>
         ) : data?.length === 0 ? (
-          <EmptyState 
-        description={`No se encontró nada para ${debounced}`}>
+          <EmptyState description={`No se encontró nada para ${debounced}`}>
             <EmptyStateActions>
               <Button variant="default" leftSection={<IconPlus size={16} />} onClick={addNew}>
                 Agregar medicamento
               </Button>
             </EmptyStateActions>
           </EmptyState>
-        ) : (<>
-          {data?.map((m) => (
-            <UnstyledButton key={m.id} onClick={() => goTo(`/medications/${m.id}`)}>
-              <MedicationItem medication={m} showStock />
-            </UnstyledButton>
-          ))}
-          <Button variant="subtle" leftSection={<IconPlus size={16} />} onClick={addNew} style={{ alignSelf: 'start' }}>
-            {`Agregar nuevo medicamento "${debounced}"`}
-          </Button>
-        </>
+        ) : (
+          <>
+            {/* Tighter than the modal's spacing: the padding of each result already separates them. */}
+            <Stack gap={2}>
+              {data?.map((m) => (
+                <UnstyledButton
+                  key={m.id}
+                  className={classes.result}
+                  onClick={() => goTo(`/medications/${m.id}`)}
+                >
+                  <MedicationItem medication={m} showStock />
+                </UnstyledButton>
+              ))}
+            </Stack>
+            <Button
+              variant="subtle"
+              leftSection={<IconPlus size={16} />}
+              onClick={addNew}
+              style={{ alignSelf: 'start' }}
+            >
+              {`Agregar nuevo medicamento "${debounced}"`}
+            </Button>
+          </>
         )}
       </Stack>
     </Modal>
