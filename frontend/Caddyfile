@@ -1,4 +1,16 @@
 # Single entry point for every device: the browser only ever talks to this server.
+#
+# HTTPS is handled by the server's own reverse proxy, which forwards here over plain HTTP.
+
+{
+	servers {
+		# Keep the X-Forwarded-* headers (proto=https, host, client IP) set by that proxy
+		# instead of replacing them, so the backend knows the original request was HTTPS.
+		# private_ranges: the proxy reaches this container from a local/Docker address.
+		trusted_proxies static private_ranges
+	}
+}
+
 :80 {
 	# /api/medications/ -> backend:8000/medications/ (prefix stripped)
 	handle_path /api/* {

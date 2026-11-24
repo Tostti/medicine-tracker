@@ -6,8 +6,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    # Published on localhost only (here and below): on a server, reach them through an SSH tunnel.
+    # Only the web container is meant to face the network, behind the HTTPS reverse proxy.
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
@@ -23,7 +25,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
     depends_on:
       db:
         condition: service_healthy
@@ -35,8 +37,12 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      # Trust X-Forwarded-Proto/For from the web container (a Docker address), so URLs the
+      # backend builds (e.g. trailing-slash redirects) keep https behind the reverse proxy.
+      FORWARDED_ALLOW_IPS: 127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+    # Used directly by the Vite dev server's /api proxy.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -47,8 +53,10 @@ services:
   web:
     build: ./frontend
     restart: unless-stopped
+    # WEB_BIND=127.0.0.1 when the reverse proxy runs on this same host (not in Docker),
+    # so the app can't be reached over plain HTTP from outside.
     ports:
-      - "${WEB_PORT:-8090}:80"
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8090}:80"
     depends_on:
       - backend
 
@@ -61,7 +69,7 @@ services:
       RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
       RUSTFS_CONSOLE_ENABLE: "true"
     ports:
-      - "${STORAGE_CONSOLE_PORT:-9001}:9001"
+      - "127.0.0.1:${STORAGE_CONSOLE_PORT:-9001}:9001"
     volumes:
       - storage_data:/data
     healthcheck:
