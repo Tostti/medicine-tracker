@@ -1,0 +1,17 @@
+# Single entry point for every device: the browser only ever talks to this server.
+:80 {
+	# /api/medications/ -> backend:8000/medications/ (prefix stripped)
+	handle_path /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Images also go through /api (/api/images/{key}), so this works with any S3 store.
+
+	# Everything else is the React app. Unknown paths fall back to index.html
+	# so client-side routes like /medications/3 survive a page refresh.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

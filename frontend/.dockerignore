@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.yarn/cache
+.yarn/install-state.gz
+# Local overrides stay local; the build falls back to /api
+.env
+.env.*

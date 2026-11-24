@@ -44,6 +44,14 @@ services:
         condition: service_healthy
         required: false
 
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8090}:80"
+    depends_on:
+      - backend
+
   storage:
     image: rustfs/rustfs:1.0.6
     profiles: ["storage"]
