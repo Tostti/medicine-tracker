@@ -128,12 +128,31 @@ to install the app on a phone, for the offline mode, and for camera access.
 - Forward the proxy to `WEB_PORT`, passing the `Host` and `X-Forwarded-Proto` headers
   (Traefik and Caddy do it by default; with nginx add
   `proxy_set_header Host $host;` and `proxy_set_header X-Forwarded-Proto $scheme;`).
-- If the proxy runs directly on the same host, set `WEB_BIND=127.0.0.1` so the app
-  can't be reached over plain HTTP from outside.
+- By default the app only listens on this machine (`WEB_BIND=127.0.0.1`), which is
+  right when the proxy runs directly on the same host. If the proxy runs in Docker or on
+  another machine, set `WEB_BIND=0.0.0.0`, after reading [Security](#security).
 - If the proxy is on another machine with a public IP, replace `private_ranges` in
   `frontend/Caddyfile` with its address, so its forwarded headers are trusted.
 - Reach pgAdmin and the storage console through an SSH tunnel, e.g.
   `ssh -L 5050:localhost:5050 user@server`.
+
+## Security
+
+**The app has no login.** Anyone who can reach it can read and change everything. Access
+control is the network, so:
+
+- **Never expose it to the internet**: no port forwarding on the router, no public
+  reverse proxy. Reach it from outside home through a private network such as
+  [Tailscale](https://tailscale.com) or a VPN.
+- `WEB_BIND` defaults to `127.0.0.1`. Changing it to `0.0.0.0` opens the app to every
+  network the server is on: only do it when the proxy needs it, and only on a trusted
+  network.
+- The database, pgAdmin, the storage console and the backend are only published on
+  `127.0.0.1`. Reach them through an SSH tunnel.
+
+The containers are also hardened, so a bug in a dependency (uvicorn, Pillow…) does less
+damage: `backend` and `web` run as unprivileged users, with a read-only filesystem
+(only `/tmp` is writable), no Linux capabilities, and no way to gain new privileges.
 
 ## Credits
 

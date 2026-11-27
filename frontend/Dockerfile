@@ -10,5 +10,13 @@ RUN yarn build
 
 # Serve it with Caddy, which also proxies /api to the backend
 FROM caddy:2-alpine
+# Run as an unprivileged user. Binding port 80 doesn't need root: Docker (20.10+) lets
+# any user bind low ports inside the container (not with network_mode: host).
+# Caddy only writes its state to /data and /config (XDG_DATA_HOME, XDG_CONFIG_HOME):
+# they're volumes in the base image, and a new volume copies this ownership.
+RUN addgroup -S -g 10002 caddy \
+    && adduser -S -D -H -u 10002 -G caddy -s /sbin/nologin caddy \
+    && chown -R caddy:caddy /data /config
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/dist /srv
+USER 10002:10002
