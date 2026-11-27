@@ -26,9 +26,15 @@ interface MedicationDrug {
   drug: Drug;
 }
 
+// 'id' is the order they were added in; 'name' ignores case and accents.
+export type MedicationSort = 'id' | 'name' | 'newest';
+
 export interface MedicationFilters {
   q?: string;
   common_use?: boolean;
+  // Only medications with some stock that hasn't expired.
+  in_stock?: boolean;
+  sort?: MedicationSort;
   skip?: number;
   limit?: number;
 }
@@ -52,6 +58,12 @@ export const fetchMedications = async (filters: MedicationFilters = {}): Promise
   }
   if (filters.common_use !== undefined) {
     url.searchParams.set('common_use', String(filters.common_use));
+  }
+  if (filters.in_stock) {
+    url.searchParams.set('in_stock', 'true');
+  }
+  if (filters.sort) {
+    url.searchParams.set('sort', filters.sort);
   }
   if (filters.skip !== undefined) {
     url.searchParams.set('skip', String(filters.skip));
