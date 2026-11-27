@@ -1,9 +1,20 @@
 import type { ReactNode } from 'react';
-import { IconCalendarCheck, IconTrashOff } from '@tabler/icons-react';
+import { IconArrowRight, IconCalendarCheck, IconTrashOff } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { Badge, EmptyState, Skeleton, Stack, Table, Text, Title } from '@mantine/core';
+import { Link } from 'react-router-dom';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Group,
+  Skeleton,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@mantine/core';
 import { fetchMedications, type Medication, toISODate } from '../../api/medications';
 import { formatDate, parseISODate } from '../../i18n';
 
@@ -49,6 +60,8 @@ interface ExpirationsCardProps {
   query: ReturnType<typeof useExpirations>;
   badge: (e: Expiration, t: TFunction) => { label: string; color: string };
   empty: ReactNode;
+  // A link to the stock page with the matching filter, shown under a non-empty table.
+  action: { label: string; to: string };
 }
 
 const ExpirationsCard = ({
@@ -58,6 +71,7 @@ const ExpirationsCard = ({
   query,
   badge,
   empty,
+  action,
 }: ExpirationsCardProps) => {
   const { t } = useTranslation();
   const { error, data } = query;
@@ -106,6 +120,7 @@ const ExpirationsCard = ({
       </Table>
     );
   }
+  const hasRows = data !== undefined && data.length > 0;
 
   return (
     <>
@@ -113,6 +128,19 @@ const ExpirationsCard = ({
         {title}
       </Title>
       {content}
+      {hasRows && (
+        <Group justify="flex-end" mt="sm">
+          <Button
+            component={Link}
+            to={action.to}
+            variant="light"
+            size="xs"
+            rightSection={<IconArrowRight size={14} />}
+          >
+            {action.label}
+          </Button>
+        </Group>
+      )}
     </>
   );
 };
@@ -134,6 +162,8 @@ export const NextExpirations = () => {
       badgeHeader={t('expirations.upcomingLeft')}
       query={useExpirations(selectUpcoming)}
       badge={upcomingBadge}
+      // Not the "expiring soon" filter: this card lists the next ones even beyond a month.
+      action={{ label: t('expirations.upcomingAction'), to: '/stock?orden=vencimiento' }}
       empty={
         <EmptyState
           icon={<IconCalendarCheck />}
@@ -162,6 +192,7 @@ export const ExpiredList = () => {
       badgeHeader={t('expirations.expiredAgo')}
       query={useExpirations(selectExpired)}
       badge={expiredBadge}
+      action={{ label: t('expirations.expiredAction'), to: '/stock?estado=vencidos' }}
       empty={
         <EmptyState
           icon={<IconTrashOff />}
