@@ -22,6 +22,7 @@ export const en = {
     search: 'Search medication',
   },
   // <site> and <license> become links.
+  version: 'Version {{version}}',
   credit:
     'Pill icon by Vaadin on <site>Icon-Icons.com</site> (<license>CC BY 4.0</license>), colors adapted',
   offline: {
