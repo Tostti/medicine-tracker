@@ -9,6 +9,7 @@ from app.services import (
     medication as medication_service,
     existence as existence_service,
 )
+from app.services.medication import MedicationSort
 
 router = APIRouter(
     prefix="/medications",
@@ -23,6 +24,8 @@ def list_medications(
     function: str | None = None,
     in_stock: bool = False,
     common_use: bool | None = None,
+    # Any other value is rejected with a 422 before reaching the service.
+    sort: MedicationSort = "id",
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -34,6 +37,7 @@ def list_medications(
         drug=drug,
         function=function,
         in_stock=in_stock,
+        sort=sort,
         skip=skip,
         limit=limit,
     )

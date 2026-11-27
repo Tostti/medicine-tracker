@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Sequence
 from datetime import date
+from typing import Literal
 
 from sqlalchemy import ColumnElement, delete, func, or_, select
 from sqlalchemy.orm import Session, selectinload
@@ -24,6 +25,20 @@ def _contains(column, term: str) -> ColumnElement[bool]:
     return func.unaccent(column).ilike(func.unaccent(f"%{escaped}%"), escape="\\")
 
 
+MedicationSort = Literal["id", "name", "newest"]
+
+# A fixed list of orderings, so a request can never put arbitrary SQL in ORDER BY.
+# Each ends in a unique column: without one, rows that tie (two "Tafirol") could swap
+# places between requests and skip/limit pages would repeat or miss them.
+_ORDER_BY: dict[MedicationSort, tuple[ColumnElement, ...]] = {
+    "id": (Medication.id,),
+    # Like the search: "Álgic" sorts with the A's, and case doesn't matter.
+    "name": (func.lower(func.unaccent(Medication.commercial_name)), Medication.id),
+    # Ids grow with each insert, so the highest is the most recently added.
+    "newest": (Medication.id.desc(),),
+}
+
+
 def get_medications(
     db: Session,
     q: str | None = None,
@@ -31,6 +46,7 @@ def get_medications(
     function: str | None = None,
     in_stock: bool = False,
     common_use: bool | None = None,
+    sort: MedicationSort = "id",
     skip: int = 0,
     limit: int = 100,
 ) -> Sequence[Medication]:
@@ -61,7 +77,7 @@ def get_medications(
         stmt = stmt.where(Medication.existences.any(Existence.due_date >= date.today()))
     if common_use is not None:
         stmt = stmt.where(Medication.common_use == common_use)
-    stmt = stmt.order_by(Medication.id).offset(skip).limit(limit)
+    stmt = stmt.order_by(*_ORDER_BY[sort]).offset(skip).limit(limit)
     return db.scalars(stmt).all()
 
 

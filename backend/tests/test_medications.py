@@ -180,6 +180,38 @@ def test_list_medications_is_ordered_by_id_and_paginated(client, create_medicati
     assert [m["id"] for m in page] == [ids[1]]
 
 
+@pytest.mark.parametrize(
+    ("sort", "expected"),
+    [
+        ("id", ["banana", "Álgido", "Cebra", "aguja", "Cebra"]),
+        # Ignoring case and accents; the two "Cebra" stay in the order they were added.
+        ("name", ["aguja", "Álgido", "banana", "Cebra", "Cebra"]),
+        ("newest", ["Cebra", "aguja", "Cebra", "Álgido", "banana"]),
+    ],
+)
+def test_list_medications_sorted(client, create_medication, sort, expected):
+    for name in ["banana", "Álgido", "Cebra", "aguja", "Cebra"]:
+        create_medication(commercial_name=name)
+
+    names = [m["commercial_name"] for m in client.get("/medications/", params={"sort": sort}).json()]
+    assert names == expected
+
+
+def test_sorted_pages_neither_repeat_nor_skip(client, create_medication):
+    ids = [create_medication(commercial_name="Same name")["id"] for _ in range(5)]
+
+    pages = [
+        client.get("/medications/", params={"sort": "name", "skip": skip, "limit": 2}).json()
+        for skip in (0, 2, 4)
+    ]
+    assert [m["id"] for page in pages for m in page] == ids
+
+
+def test_list_medications_rejects_an_unknown_sort(client):
+    response = client.get("/medications/", params={"sort": "commercial_name; DROP TABLE"})
+    assert response.status_code == 422
+
+
 # --- Search and filters ---
 
 
