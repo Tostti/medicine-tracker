@@ -22,16 +22,15 @@ const PAGE_SIZE = 20;
 
 export function MedicationsPage() {
   const { t } = useTranslation();
-  const { data, error, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ['medications', 'list'],
-      queryFn: ({ pageParam }) => fetchMedications({ skip: pageParam, limit: PAGE_SIZE }),
-      initialPageParam: 0,
-      // The backend gives no total: a short page means there's nothing after it.
-      getNextPageParam: (lastPage, allPages) =>
-        lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
-      select: (d) => d.pages.flat(),
-    });
+  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['medications', 'list'],
+    queryFn: ({ pageParam }) => fetchMedications({ skip: pageParam, limit: PAGE_SIZE }),
+    initialPageParam: 0,
+    // The backend gives no total: a short page means there's nothing after it.
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
+    select: (d) => d.pages.flat(),
+  });
 
   // An empty element after the last item: when it scrolls into view, load the next page.
   const { ref: sentinelRef, inViewport } = useInViewport();
@@ -43,16 +42,17 @@ export function MedicationsPage() {
   }, [inViewport, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   let content;
-  if (isPending) {
-    content = (
+  if (data === undefined) {
+    // Only without saved data: a failed refetch keeps showing the cached list.
+    content = error ? (
+      <Text c="red">{error.message}</Text>
+    ) : (
       <Stack gap="sm">
         {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} height={64} radius="md" />
         ))}
       </Stack>
     );
-  } else if (error) {
-    content = <Text c="red">{error.message}</Text>;
   } else if (data.length === 0) {
     content = (
       <EmptyState

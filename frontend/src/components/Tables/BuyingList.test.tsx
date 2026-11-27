@@ -1,4 +1,5 @@
 import {
+  act,
   aMedication,
   daysFromToday,
   jsonResponse,
@@ -98,5 +99,28 @@ describe('BuyingList', () => {
     renderApp(<BuyingList />);
 
     expect(await screen.findByText('Couldn’t load the medications')).toBeInTheDocument();
+  });
+
+  it('keeps showing the loaded list when a refetch can’t reach the server', async () => {
+    let serverUp = true;
+    mockFetch(() => {
+      if (!serverUp) {
+        throw new TypeError('Failed to fetch');
+      }
+      return jsonResponse([aMedication({ commercial_name: 'Ibuprofen', common_use: true })]);
+    });
+    const { queryClient } = renderApp(<BuyingList />);
+    await screen.findByText('Ibuprofen');
+
+    serverUp = false;
+    // TanStack notifies components on a timer, so wait one tick for the re-render too.
+    await act(async () => {
+      await queryClient.refetchQueries();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(queryClient.getQueryState(['medications', { common_use: true }])?.status).toBe('error');
+    expect(screen.getByText('Ibuprofen')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to fetch')).not.toBeInTheDocument();
   });
 });

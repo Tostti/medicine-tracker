@@ -58,7 +58,7 @@ const filters = { common_use: true };
 
 const BuyingList = () => {
   const { t } = useTranslation();
-  const { isPending, error, data } = useQuery({
+  const { error, data } = useQuery({
     queryKey: ['medications', filters],
     queryFn: () => fetchMedications(filters),
     select: toBuyingList,
@@ -70,15 +70,18 @@ const BuyingList = () => {
         {t('buyingList.title')}
       </Title>
 
-      {isPending ? (
-        <Stack gap="xs">
-          <Skeleton height={8} radius="xl" />
-          <Skeleton height={8} radius="xl" />
-          <Skeleton height={8} radius="xl" />
-          <Skeleton height={8} radius="xl" />
-        </Stack>
-      ) : error ? (
-        <Text c="red">{error.message}</Text>
+      {/* A failed refetch keeps showing the cached list; the error only when there's none. */}
+      {data === undefined ? (
+        error ? (
+          <Text c="red">{error.message}</Text>
+        ) : (
+          <Stack gap="xs">
+            <Skeleton height={8} radius="xl" />
+            <Skeleton height={8} radius="xl" />
+            <Skeleton height={8} radius="xl" />
+            <Skeleton height={8} radius="xl" />
+          </Stack>
+        )
       ) : data.length === 0 ? (
         <EmptyState
           icon={<IconCheck />}
