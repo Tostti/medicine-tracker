@@ -97,15 +97,47 @@ describe('BuyingList', () => {
     expect(await screen.findByText('Nothing to buy')).toBeInTheDocument();
   });
 
-  it('shows which brands cover what has to be bought', async () => {
-    setup([
-      anEssential('Ibuprofeno', [
-        aMedication({ commercial_name: 'Ibupirac', existences: [existence(-1)] }),
-        aMedication({ commercial_name: 'Actron', existences: [existence(-5)] }),
-      ]),
-    ]);
+  describe('names', () => {
+    // [title, subtitle] of the only item in the list.
+    const labels = async () => {
+      const item = await screen.findByRole('listitem');
+      return within(item)
+        .getAllByText(/.+/, { selector: 'p' })
+        .map((el) => el.textContent);
+    };
+    const expired = (commercial_name: string) =>
+      aMedication({ commercial_name, existences: [existence(-1)] });
 
-    expect(await screen.findByText('Ibupirac, Actron')).toBeInTheDocument();
+    it('uses the composition when no brand covers it', async () => {
+      setup([anEssential('Ibuprofeno')]);
+
+      expect(await labels()).toEqual(['Ibuprofeno 600 mg']);
+    });
+
+    it('puts the brand on top, and the composition below', async () => {
+      setup([anEssential('Hioscina', [expired('Buscapina compositum')])]);
+
+      expect(await labels()).toEqual(['Buscapina compositum', 'Hioscina 600 mg']);
+    });
+
+    it('names up to two brands', async () => {
+      setup([anEssential('Ibuprofeno', [expired('Actron 600'), expired('Ibupirac 600')])]);
+
+      expect(await labels()).toEqual(['Actron 600, Ibupirac 600', 'Ibuprofeno 600 mg']);
+    });
+
+    it('counts the rest of the brands', async () => {
+      setup([
+        anEssential('Ibuprofeno', [
+          expired('Actron 600'),
+          expired('Ibupirac 600'),
+          expired('Ibuevanol 600'),
+          expired('Febratic 600'),
+        ]),
+      ]);
+
+      expect(await labels()).toEqual(['Actron 600, Ibupirac 600 and 2 more', 'Ibuprofeno 600 mg']);
+    });
   });
 
   it('says when there is nothing to buy', async () => {

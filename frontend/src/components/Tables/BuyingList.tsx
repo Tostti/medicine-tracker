@@ -1,5 +1,6 @@
 import { IconCheck, IconListCheck, IconSettings } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -76,6 +77,28 @@ const toBuyingList = (essentials: EssentialDetail[]): BuyingItem[] => {
   });
 };
 
+const MAX_BRANDS = 2;
+
+/**
+ * What to call an item of the list. A brand is easier to recognize than its composition
+ * ("Buscapina compositum" vs "Hioscina butilbromuro 10mg + Dipirona 250mg"), so the
+ * brands go on top when there are any, and the composition below. With no brand at home,
+ * the composition is all there is.
+ */
+const itemLabels = (essential: EssentialDetail, t: TFunction) => {
+  const composition = compositionLabel(essential.drugs);
+  const brands = essential.medications.map((m) => m.commercial_name);
+  if (brands.length === 0) {
+    return { title: composition, subtitle: null };
+  }
+  const shown = brands.slice(0, MAX_BRANDS).join(', ');
+  const hidden = brands.length - MAX_BRANDS;
+  return {
+    title: hidden > 0 ? t('buyingList.moreBrands', { names: shown, count: hidden }) : shown,
+    subtitle: composition,
+  };
+};
+
 const BuyingList = () => {
   const { t } = useTranslation();
   const { error, data } = useQuery({
@@ -129,23 +152,26 @@ const BuyingList = () => {
         />
       ) : (
         <List>
-          {items.map(({ essential, reasons }) => (
-            <List.Item key={essential.id}>
-              <Group gap="xs">
-                <Text>{compositionLabel(essential.drugs)}</Text>
-                {reasons.map((reason) => (
-                  <Badge key={reason} color={reasonColor[reason]} variant="light">
-                    {t(`common.${reason}`)}
-                  </Badge>
-                ))}
-              </Group>
-              {essential.medications.length > 0 && (
-                <Text size="xs" c="dimmed">
-                  {essential.medications.map((m) => m.commercial_name).join(', ')}
-                </Text>
-              )}
-            </List.Item>
-          ))}
+          {items.map(({ essential, reasons }) => {
+            const { title, subtitle } = itemLabels(essential, t);
+            return (
+              <List.Item key={essential.id}>
+                <Group gap="xs">
+                  <Text>{title}</Text>
+                  {reasons.map((reason) => (
+                    <Badge key={reason} color={reasonColor[reason]} variant="light">
+                      {t(`common.${reason}`)}
+                    </Badge>
+                  ))}
+                </Group>
+                {subtitle && (
+                  <Text size="xs" c="dimmed">
+                    {subtitle}
+                  </Text>
+                )}
+              </List.Item>
+            );
+          })}
         </List>
       )}
     </>

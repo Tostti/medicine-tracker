@@ -19,6 +19,7 @@ export const en = {
     home: 'Home',
     medications: 'Medications',
     stock: 'Stock',
+    essentials: 'Essentials',
     search: 'Search medication',
   },
   // <site> and <license> become links.
@@ -43,6 +44,9 @@ export const en = {
     title: 'Shopping list',
     emptyTitle: 'Nothing to buy',
     emptyText: 'All the medications you need are in good shape',
+    // Two brands and how many more: "Actron 600, Ibupirac 600 and 1 more"
+    moreBrands_one: '{{names}} and {{count}} more',
+    moreBrands_other: '{{names}} and {{count}} more',
     noEssentialsTitle: 'No essentials yet',
     noEssentialsText: 'Mark what you always want at home, and it shows up here when it runs out.',
   },
