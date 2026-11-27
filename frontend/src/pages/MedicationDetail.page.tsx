@@ -188,12 +188,13 @@ export function MedicationDetailPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
 
-  const { data, error, isPending } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ['medications', 'detail', id],
     queryFn: () => fetchMedication(id),
     enabled: validId,
     // A missing medication won't appear by retrying.
-    retry: (count, err) => !(err instanceof NotFoundError) && count < 3,
+    retry: (count, err) =>
+      !(err instanceof NotFoundError) && !(err instanceof TypeError) && count < 3,
   });
 
   const handleSubmit = async (values: MedicationFormValues) => {
@@ -225,10 +226,11 @@ export function MedicationDetailPage() {
         description={t('detail.notFoundText')}
       />
     );
-  } else if (error) {
-    content = <Text c="red">{error.message}</Text>;
-  } else if (isPending) {
-    content = (
+  } else if (data === undefined) {
+    // Only without saved data: a failed refetch keeps showing the cached medication.
+    content = error ? (
+      <Text c="red">{error.message}</Text>
+    ) : (
       <Stack gap="md">
         <Skeleton height={180} radius="md" />
         <Skeleton height={160} radius="md" />

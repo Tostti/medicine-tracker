@@ -60,11 +60,14 @@ const ExpirationsCard = ({
   empty,
 }: ExpirationsCardProps) => {
   const { t } = useTranslation();
-  const { isPending, error, data } = query;
+  const { error, data } = query;
 
   let content: ReactNode;
-  if (isPending) {
-    content = (
+  if (data === undefined) {
+    // Only without saved data: a failed refetch keeps showing the cached table.
+    content = error ? (
+      <Text c="red">{error.message}</Text>
+    ) : (
       <Stack gap="xs">
         <Skeleton height={8} radius="xl" />
         <Skeleton height={8} radius="xl" />
@@ -72,8 +75,6 @@ const ExpirationsCard = ({
         <Skeleton height={8} radius="xl" />
       </Stack>
     );
-  } else if (error) {
-    content = <Text c="red">{error.message}</Text>;
   } else if (data.length === 0) {
     content = empty;
   } else {

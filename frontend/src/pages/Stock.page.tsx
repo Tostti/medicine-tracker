@@ -27,10 +27,11 @@ const loading = (
 // Opened from a medication's detail page: only that medication, even with no stock yet.
 const SingleMedicationStock = ({ id }: { id: number }) => {
   const { t } = useTranslation();
-  const { data, error, isPending } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ['medications', 'detail', id],
     queryFn: () => fetchMedication(id),
-    retry: (count, err) => !(err instanceof NotFoundError) && count < 3,
+    retry: (count, err) =>
+      !(err instanceof NotFoundError) && !(err instanceof TypeError) && count < 3,
   });
 
   return (
@@ -47,10 +48,13 @@ const SingleMedicationStock = ({ id }: { id: number }) => {
           <IconArrowLeft size={16} /> {t('stock.seeAll')}
         </Anchor>
       </Group>
-      {isPending ? (
-        loading
-      ) : error ? (
-        <Text c="red">{error.message}</Text>
+      {/* A failed refetch keeps showing the cached data; the error only when there's none. */}
+      {data === undefined ? (
+        error ? (
+          <Text c="red">{error.message}</Text>
+        ) : (
+          loading
+        )
       ) : (
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
           <MedicationStockCard medication={data} />
@@ -65,7 +69,7 @@ const AllStock = () => {
   const navigate = useNavigate();
   // All of them, not only the ones with stock: the selector also lets you add stock to the rest.
   const filters = { limit: 1000 };
-  const { data, error, isPending } = useQuery({
+  const { data, error } = useQuery({
     queryKey: ['medications', filters],
     queryFn: () => fetchMedications(filters),
     select: (medications) =>
@@ -89,10 +93,12 @@ const AllStock = () => {
           w={{ base: '100%', xs: 260 }}
         />
       </Group>
-      {isPending ? (
-        loading
-      ) : error ? (
-        <Text c="red">{error.message}</Text>
+      {data === undefined ? (
+        error ? (
+          <Text c="red">{error.message}</Text>
+        ) : (
+          loading
+        )
       ) : withStock.length === 0 ? (
         <EmptyState
           icon={<IconPackageOff />}

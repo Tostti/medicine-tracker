@@ -72,7 +72,7 @@ export const MedicationSearch = ({ opened, onClose }: MedicationSearchProps) => 
           <Text size="sm" c="dimmed">
             {t('search.minChars', { count: MIN_CHARS })}
           </Text>
-        ) : error ? (
+        ) : error && data === undefined ? (
           <Text c="red">{error.message}</Text>
         ) : data?.length === 0 ? (
           <EmptyState description={t('search.noResults', { query: debounced })}>

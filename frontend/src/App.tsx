@@ -19,6 +19,9 @@ const queryClient = new QueryClient({
       gcTime: CACHE_MAX_AGE,
       // Without a network, keep showing cached data instead of waiting for one.
       networkMode: 'offlineFirst',
+      // fetch() rejects with a TypeError when the server can't be reached: retrying won't
+      // help soon, and the cached data is already on screen, so fail fast.
+      retry: (count, err) => !(err instanceof TypeError) && count < 3,
     },
   },
 });
@@ -36,6 +39,11 @@ export default function App() {
           maxAge: CACHE_MAX_AGE,
           // Change this when the API's data shape changes, so old saved data is thrown away.
           buster: 'v1',
+          dehydrateOptions: {
+            // The default saves only queries whose last fetch succeeded, so one failed refetch
+            // (server down) would erase their saved data. Keep anything that has data.
+            shouldDehydrateQuery: (query) => query.state.data !== undefined,
+          },
         }}
       >
         <Router />
