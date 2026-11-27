@@ -20,6 +20,7 @@ export const es: typeof en = {
     home: 'Inicio',
     medications: 'Medicamentos',
     stock: 'Stock',
+    essentials: 'Esenciales',
     search: 'Buscar medicamento',
   },
   version: 'Versión {{version}}',
@@ -45,6 +46,9 @@ export const es: typeof en = {
     title: 'Lista de compra',
     emptyTitle: 'Nada que comprar',
     emptyText: 'Todos los medicamentos necesarios están en buenas condiciones',
+    // Dos marcas y cuántas más: "Actron 600, Ibupirac 600 y 1 más"
+    moreBrands_one: '{{names}} y {{count}} más',
+    moreBrands_other: '{{names}} y {{count}} más',
     noEssentialsTitle: 'Todavía no hay esenciales',
     noEssentialsText: 'Marcá lo que querés tener siempre en casa, y aparece acá cuando se acaba.',
   },

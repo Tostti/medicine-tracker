@@ -1,4 +1,4 @@
-import { IconHome, IconPackage, IconPill, IconSearch } from '@tabler/icons-react';
+import { IconHome, IconPackage, IconPill, IconSearch, IconStar } from '@tabler/icons-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Outlet, NavLink as RouterNavLink, useLocation } from 'react-router-dom';
 import {
@@ -28,6 +28,8 @@ const links = [
   { to: '/', label: 'nav.home', icon: IconHome },
   { to: '/medications', label: 'nav.medications', icon: IconPill },
   { to: '/stock', label: 'nav.stock', icon: IconPackage },
+  // The same star as "Always keep…" on a medication's page.
+  { to: '/essentials', label: 'nav.essentials', icon: IconStar },
 ] as const;
 
 export function AppLayout() {
