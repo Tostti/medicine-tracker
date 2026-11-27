@@ -20,14 +20,14 @@ describe('fetchMedications', () => {
     const fetchMock = mockFetch(() => jsonResponse([]));
 
     await fetchMedications();
-    await fetchMedications({ q: 'ibu prof', common_use: false, skip: 0, limit: 20 });
+    await fetchMedications({ q: 'ibu prof', essential: false, in_stock: true, skip: 0, limit: 20 });
 
     const [all, filtered] = fetchMock.requests.map((r) => r.url);
     expect(all.pathname).toBe('/api/medications/');
     expect(all.search).toBe('');
     expect(Object.fromEntries(filtered.searchParams)).toEqual({
       q: 'ibu prof',
-      common_use: 'false',
+      in_stock: 'true',
       skip: '0',
       limit: '20',
     });
@@ -127,11 +127,11 @@ describe('writes', () => {
   it('updateMedication PATCHes the medication', async () => {
     const fetchMock = mockFetch(() => jsonResponse(aMedication({ id: 3 })));
 
-    await updateMedication(3, { common_use: true });
+    await updateMedication(3, { type: 'Syrup' });
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/medications/3',
-      expect.objectContaining({ method: 'PATCH', body: '{"common_use":true}' })
+      expect.objectContaining({ method: 'PATCH', body: '{"type":"Syrup"}' })
     );
   });
 

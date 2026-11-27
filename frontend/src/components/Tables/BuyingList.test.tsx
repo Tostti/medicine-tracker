@@ -8,97 +8,126 @@ import {
   screen,
   within,
 } from '@test-utils';
-import type { Medication } from '../../api/medications';
+import type { EssentialDetail } from '../../api/essentials';
+import type { Existence, Medication } from '../../api/medications';
 import BuyingList from './BuyingList';
 
-const existence = (days: number, low_amount = false) => ({
+const existence = (days: number, low_amount = false): Existence => ({
   id: Math.random(),
   due_date: daysFromToday(days),
   low_amount,
 });
 
-function setup(medications: Medication[]) {
-  const fetchMock = mockFetch(() => jsonResponse(medications));
+let nextId = 1;
+// An essential for one drug at 600 mg ("Ibuprofeno 600 mg"), covered by these medications.
+const anEssential = (drug: string, medications: Medication[] = []): EssentialDetail => {
+  const id = nextId++;
+  return { id, drugs: [{ dose: '600 mg', drug: { id, name: drug } }], medications };
+};
+
+function setup(essentials: EssentialDetail[]) {
+  const fetchMock = mockFetch(() => jsonResponse(essentials));
   renderApp(<BuyingList />);
   return fetchMock;
 }
 
-// The badges shown next to a medication in the list.
-const reasonsFor = async (name: string) => {
-  const item = (await screen.findByText(name)).closest('li')!;
+// The badges shown next to an essential in the list.
+const reasonsFor = async (label: string) => {
+  const item = (await screen.findByText(label)).closest('li')!;
   return within(item)
-    .queryAllByText(/.+/)
-    .map((el) => el.textContent)
-    .filter((text) => text !== name);
+    .queryAllByText(/^(Out of stock|Expired|Expiring soon|Running low)$/)
+    .map((el) => el.textContent);
 };
 
 describe('BuyingList', () => {
-  it('only asks for common-use medications', async () => {
+  it('reads the essentials', async () => {
     const fetchMock = setup([]);
 
-    await screen.findByText('Nothing to buy');
-    expect(fetchMock.requests[0].url.searchParams.get('common_use')).toBe('true');
+    await screen.findByText('No essentials yet');
+    expect(fetchMock.requests[0].url.pathname).toBe('/api/essentials/');
   });
 
-  it('lists what has no stock at all', async () => {
-    setup([aMedication({ commercial_name: 'Tafirol' })]);
+  it('lists an essential no brand covers', async () => {
+    setup([anEssential('Ibuprofeno')]);
 
-    expect(await reasonsFor('Tafirol')).toEqual(['Out of stock']);
+    expect(await reasonsFor('Ibuprofeno 600 mg')).toEqual(['Out of stock']);
   });
 
   it('lists what only has expired stock', async () => {
-    setup([aMedication({ commercial_name: 'Tafirol', existences: [existence(-1)] })]);
+    setup([anEssential('Ibuprofeno', [aMedication({ existences: [existence(-1)] })])]);
 
-    expect(await reasonsFor('Tafirol')).toEqual(['Expired']);
+    expect(await reasonsFor('Ibuprofeno 600 mg')).toEqual(['Expired']);
   });
 
   it('lists what expires within a month', async () => {
     setup([
-      aMedication({ commercial_name: 'Tafirol', existences: [existence(-10), existence(20)] }),
+      anEssential('Ibuprofeno', [aMedication({ existences: [existence(-10), existence(20)] })]),
     ]);
 
-    expect(await reasonsFor('Tafirol')).toEqual(['Expiring soon']);
+    expect(await reasonsFor('Ibuprofeno 600 mg')).toEqual(['Expiring soon']);
   });
 
   it('lists the last unit when it is running low', async () => {
-    setup([aMedication({ commercial_name: 'Tafirol', existences: [existence(90, true)] })]);
+    setup([anEssential('Ibuprofeno', [aMedication({ existences: [existence(90, true)] })])]);
 
-    expect(await reasonsFor('Tafirol')).toEqual(['Running low']);
+    expect(await reasonsFor('Ibuprofeno 600 mg')).toEqual(['Running low']);
   });
 
   it('can give several reasons at once', async () => {
-    setup([aMedication({ commercial_name: 'Tafirol', existences: [existence(5, true)] })]);
+    setup([anEssential('Ibuprofeno', [aMedication({ existences: [existence(5, true)] })])]);
 
-    expect(await reasonsFor('Tafirol')).toEqual(['Expiring soon', 'Running low']);
+    expect(await reasonsFor('Ibuprofeno 600 mg')).toEqual(['Expiring soon', 'Running low']);
   });
 
-  it('leaves out what is well stocked', async () => {
+  it('counts the stock of every brand together', async () => {
     setup([
-      aMedication({ commercial_name: 'Fine', existences: [existence(200)] }),
-      // Running low, but there's another valid unit.
-      aMedication({ commercial_name: 'Spare', existences: [existence(200, true), existence(300)] }),
-      // One unit expires soon, but another lasts longer.
-      aMedication({ commercial_name: 'Later', existences: [existence(10), existence(200)] }),
-      aMedication({ commercial_name: 'Missing' }),
+      anEssential('Ibuprofeno', [
+        // On its own, this one would be "expiring soon"...
+        aMedication({ commercial_name: 'Ibupirac', existences: [existence(10)] }),
+        // ...but this other brand lasts longer.
+        aMedication({ commercial_name: 'Actron', existences: [existence(200)] }),
+      ]),
+      anEssential('Paracetamol', [
+        // Each one alone is the last unit, running low; together they're two.
+        aMedication({ existences: [existence(200, true)] }),
+        aMedication({ existences: [existence(300, true)] }),
+      ]),
     ]);
 
-    await screen.findByText('Missing');
-    expect(screen.queryByText('Fine')).not.toBeInTheDocument();
-    expect(screen.queryByText('Spare')).not.toBeInTheDocument();
-    expect(screen.queryByText('Later')).not.toBeInTheDocument();
+    expect(await screen.findByText('Nothing to buy')).toBeInTheDocument();
+  });
+
+  it('shows which brands cover what has to be bought', async () => {
+    setup([
+      anEssential('Ibuprofeno', [
+        aMedication({ commercial_name: 'Ibupirac', existences: [existence(-1)] }),
+        aMedication({ commercial_name: 'Actron', existences: [existence(-5)] }),
+      ]),
+    ]);
+
+    expect(await screen.findByText('Ibupirac, Actron')).toBeInTheDocument();
   });
 
   it('says when there is nothing to buy', async () => {
-    setup([aMedication({ existences: [existence(200)] })]);
+    setup([anEssential('Ibuprofeno', [aMedication({ existences: [existence(200)] })])]);
 
     expect(await screen.findByText('Nothing to buy')).toBeInTheDocument();
+  });
+
+  it('links to the essentials', async () => {
+    setup([]);
+
+    expect(await screen.findByRole('link', { name: 'Essentials' })).toHaveAttribute(
+      'href',
+      '/essentials'
+    );
   });
 
   it('shows the error when loading fails', async () => {
     mockFetch(() => jsonResponse(null, 500));
     renderApp(<BuyingList />);
 
-    expect(await screen.findByText('Couldn’t load the medications')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t load the essentials')).toBeInTheDocument();
   });
 
   it('keeps showing the loaded list when a refetch can’t reach the server', async () => {
@@ -107,10 +136,10 @@ describe('BuyingList', () => {
       if (!serverUp) {
         throw new TypeError('Failed to fetch');
       }
-      return jsonResponse([aMedication({ commercial_name: 'Ibuprofen', common_use: true })]);
+      return jsonResponse([anEssential('Ibuprofeno')]);
     });
     const { queryClient } = renderApp(<BuyingList />);
-    await screen.findByText('Ibuprofen');
+    await screen.findByText('Ibuprofeno 600 mg');
 
     serverUp = false;
     // TanStack notifies components on a timer, so wait one tick for the re-render too.
@@ -119,8 +148,8 @@ describe('BuyingList', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(queryClient.getQueryState(['medications', { common_use: true }])?.status).toBe('error');
-    expect(screen.getByText('Ibuprofen')).toBeInTheDocument();
+    expect(queryClient.getQueryState(['medications', 'essentials'])?.status).toBe('error');
+    expect(screen.getByText('Ibuprofeno 600 mg')).toBeInTheDocument();
     expect(screen.queryByText('Failed to fetch')).not.toBeInTheDocument();
   });
 });

@@ -34,7 +34,6 @@ describe('MedicationForm', () => {
     type(screen.getByLabelText(/Brand name/), '  Tafirol  ');
     type(screen.getByLabelText('Type'), ' Tablets ');
     type(screen.getByLabelText('Function'), '');
-    fireEvent.click(screen.getByRole('switch', { name: /^Common use/ }));
     type(drugInputs()[0], ' Paracetamol ');
     type(doseInputs()[0], ' 500 mg ');
     submit();
@@ -44,7 +43,6 @@ describe('MedicationForm', () => {
       commercial_name: 'Tafirol',
       type: 'Tablets',
       function: '',
-      common_use: true,
       picture: null,
       drugs: [{ name: 'Paracetamol', dose: '500 mg' }],
       existences: [],
@@ -160,7 +158,6 @@ describe('MedicationForm', () => {
       commercial_name: 'Tafirol',
       type: 'Tablets',
       function: null,
-      common_use: true,
       picture_uri: 'https://example.com/a.jpg',
       drugs: [{ dose: '500 mg', drug: { id: 1, name: 'Paracetamol' } }],
     });
@@ -171,7 +168,6 @@ describe('MedicationForm', () => {
       expect(screen.getByLabelText(/Brand name/)).toHaveValue('Tafirol');
       expect(screen.getByLabelText('Type')).toHaveValue('Tablets');
       expect(screen.getByLabelText('Function')).toHaveValue('');
-      expect(screen.getByRole('switch', { name: /^Common use/ })).toBeChecked();
       expect(drugInputs()[0]).toHaveValue('Paracetamol');
       expect(doseInputs()[0]).toHaveValue('500 mg');
       expect(screen.getByText('Change picture')).toBeInTheDocument();

@@ -1,10 +1,14 @@
 from collections.abc import Sequence
-from datetime import date
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
-from app.models import Drug, Existence, Medication, MedicationDrug
+from app.models import Drug
+from app.schemas.drug import MedicationDrugCreate
+
+
+class InvalidCompositionError(ValueError):
+    """A list of drugs refers to a missing drug, or lists one twice."""
 
 
 def get_drugs(
@@ -44,3 +48,30 @@ def add_drug(db: Session, name: str) -> Drug:
     db.commit()
     db.refresh(drug)
     return drug
+
+
+def resolve_composition(
+    db: Session, drugs: list[MedicationDrugCreate]
+) -> list[tuple[Drug, str]]:
+    """Turn drugs given by id or by name into (drug, dose) pairs.
+
+    Shared by medications and essentials. Doesn't commit: drugs created by name are
+    only flushed, so the caller's transaction saves them with the rest or not at all.
+    """
+    result: list[tuple[Drug, str]] = []
+    seen_drug_ids: set[int] = set()
+    for d in drugs:
+        if d.drug_id is not None:
+            drug = get_drug(db, d.drug_id)
+            if drug is None:
+                raise InvalidCompositionError(f"Drug {d.drug_id} not found")
+        else:
+            drug = get_or_create_drug(db, d.name)
+
+        # A drug can only appear once (it's part of the primary key).
+        if drug.id in seen_drug_ids:
+            raise InvalidCompositionError(f"Drug '{drug.name}' is listed twice")
+        seen_drug_ids.add(drug.id)
+
+        result.append((drug, d.dose))
+    return result

@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from app.api import medications, drugs, existences, images
+from app.api import drugs, essentials, existences, images, medications
 from app.services import storage
 
 
@@ -23,3 +23,4 @@ app.include_router(medications.router)
 app.include_router(drugs.router)
 app.include_router(existences.router)
 app.include_router(images.router)
+app.include_router(essentials.router)

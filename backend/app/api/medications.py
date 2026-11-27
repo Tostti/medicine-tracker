@@ -6,6 +6,7 @@ from app.db.database import get_db
 from app.schemas.medication import MedicationDetail, MedicationCreate, MedicationUpdate
 from app.schemas.existence import ExistenceRead, ExistenceCreate
 from app.services import (
+    drug as drug_service,
     medication as medication_service,
     existence as existence_service,
 )
@@ -23,7 +24,8 @@ def list_medications(
     drug: str | None = None,
     function: str | None = None,
     in_stock: bool = False,
-    common_use: bool | None = None,
+    # Only medications that cover some essential.
+    essential: bool = False,
     # Any other value is rejected with a 422 before reaching the service.
     sort: MedicationSort = "id",
     skip: int = 0,
@@ -33,7 +35,7 @@ def list_medications(
     return medication_service.get_medications(
         db,
         q=q,
-        common_use=common_use,
+        essential=essential,
         drug=drug,
         function=function,
         in_stock=in_stock,
@@ -90,7 +92,7 @@ def update_medication(
         raise HTTPException(status_code=404, detail="Medication not found")
     try:
         return medication_service.edit_medication(db, medication, payload)
-    except medication_service.InvalidMedicationError as e:
+    except drug_service.InvalidCompositionError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
         )
@@ -117,7 +119,7 @@ def create_medication(
 ):
     try:
         return medication_service.create_medication(db, payload)
-    except medication_service.InvalidMedicationError as e:
+    except drug_service.InvalidCompositionError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
         )

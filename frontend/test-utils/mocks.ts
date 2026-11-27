@@ -18,7 +18,6 @@ export const aMedication = (overrides: Partial<Medication> = {}): Medication => 
     type: null,
     function: null,
     picture_uri: null,
-    common_use: false,
     drugs: [],
     existences: [],
     ...overrides,

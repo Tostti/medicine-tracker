@@ -35,6 +35,7 @@ import {
   toISODate,
   updateMedication,
 } from '../api/medications';
+import { EssentialControl } from '../components/Essentials/EssentialControl';
 import {
   MedicationForm,
   type MedicationFormValues,
@@ -79,11 +80,7 @@ const MedicationView = ({ medication, onEdit }: { medication: Medication; onEdit
           </Avatar>
           <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
             <Title order={2}>{medication.commercial_name}</Title>
-            {medication.common_use && (
-              <Badge variant="light" style={{ alignSelf: 'start' }}>
-                {t('detail.commonUse')}
-              </Badge>
-            )}
+            <EssentialControl medication={medication} />
           </Stack>
           <Tooltip label={t('common.edit')}>
             <ActionIcon variant="light" size="lg" aria-label={t('common.edit')} onClick={onEdit}>
@@ -202,7 +199,6 @@ export function MedicationDetailPage() {
       commercial_name: values.commercial_name,
       type: values.type || null,
       function: values.function || null,
-      common_use: values.common_use,
       drugs: values.drugs,
     });
     if (values.picture) {

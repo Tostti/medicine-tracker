@@ -42,6 +42,8 @@ export const en = {
     title: 'Shopping list',
     emptyTitle: 'Nothing to buy',
     emptyText: 'All the medications you need are in good shape',
+    noEssentialsTitle: 'No essentials yet',
+    noEssentialsText: 'Mark what you always want at home, and it shows up here when it runs out.',
   },
   expirations: {
     upcomingTitle: 'Upcoming expirations',
@@ -61,6 +63,24 @@ export const en = {
     expiredEmptyText: 'Nothing to throw away',
     upcomingAction: 'See all by expiration',
     expiredAction: 'Review and throw away',
+  },
+  essentials: {
+    title: 'Essentials',
+    intro:
+      'What to always have at home, whatever the brand. Any medication with the same drugs and doses counts.',
+    essential: 'Essential',
+    manage: 'Essentials',
+    add: 'Add essentials',
+    addHelp:
+      'The drug and dose to always have: “Ibuprofeno” and “600 mg”. Add more drugs for a combination.',
+    alwaysKeep: 'Always keep {{composition}}',
+    stopKeeping: 'Stop keeping',
+    stopKeepingConfirm:
+      'Stop keeping {{composition}}? It leaves the shopping list, for every brand with that composition.',
+    removeLabel: 'Stop keeping {{composition}}',
+    needsComposition: 'Add its composition to make it essential',
+    noBrands: 'No brand at home yet',
+    emptyText: 'Add the drugs and doses you always want at home.',
   },
   search: {
     title: 'Search medication',
@@ -93,7 +113,6 @@ export const en = {
   },
   detail: {
     back: 'Medications',
-    commonUse: 'Common use',
     type: 'Type',
     function: 'Function',
     composition: 'Composition',
@@ -118,8 +137,6 @@ export const en = {
     picture: 'Picture',
     changePicture: 'Change picture',
     choosePicture: 'Choose a picture',
-    commonUse: 'Common use',
-    commonUseHelp: 'Taken into account for the shopping list',
     composition: 'Composition',
     drug: 'Drug',
     dose: 'Dose',
@@ -172,5 +189,9 @@ export const en = {
     addStock: 'Couldn’t add the stock',
     updateStock: 'Couldn’t update the stock',
     discard: 'Couldn’t throw it away',
+    fetchEssentials: 'Couldn’t load the essentials',
+    createEssential: 'Couldn’t save the essential',
+    duplicateEssential: 'That composition is already an essential',
+    deleteEssential: 'Couldn’t remove the essential',
   },
 };
