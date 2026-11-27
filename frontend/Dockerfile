@@ -6,7 +6,9 @@ RUN npm install -g corepack && corepack enable
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn install --immutable
 COPY . .
-RUN yarn build
+# Shown in the app; CI passes the release ("1.1.0") or the commit ("sha-abc1234").
+ARG APP_VERSION=dev
+RUN VITE_APP_VERSION=$APP_VERSION yarn build
 
 # Serve it with Caddy, which also proxies /api to the backend
 FROM caddy:2-alpine

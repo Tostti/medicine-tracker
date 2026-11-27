@@ -15,6 +15,7 @@ import {
   UnstyledButton,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { AppVersion } from '../components/AppVersion/AppVersion';
 import { OfflineBanner } from '../components/Offline/OfflineBanner';
 import { MedicationSearch } from '../components/Search/MedicationSearch';
 import classes from './AppLayout.module.css';
@@ -85,6 +86,7 @@ export function AppLayout() {
               }}
             />
           </Text>
+          <AppVersion mt="xs" />
         </Stack>
       </AppShell.Navbar>
 

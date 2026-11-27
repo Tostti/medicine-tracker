@@ -1,7 +1,10 @@
 # Builds the backend and web images.
 # - Pull requests: build only, to catch a broken Dockerfile before merging.
 # - main: publish to GHCR as :latest and :sha-<commit>.
-# - Tags like v1.2.3: publish as :1.2.3 too.
+# - Tags like v1.2.3: publish as :1.2.3 and :1.2 too, and create the GitHub Release.
+#
+# Production should pin IMAGE_TAG to a release (see "Releasing" in the README): :latest
+# follows main, so every merge would reach the server on its next pull.
 #
 # The server only needs docker-compose.yml and .env, then `docker compose pull`.
 name: Docker images
@@ -56,7 +59,18 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=ref,event=pr
+
+      # What the app shows as its version: the release for a tag, otherwise the commit.
+      - name: App version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: docker/build-push-action@v7
         with:
@@ -65,6 +79,22 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Only the web image uses it; the backend's Dockerfile ignores it.
+          build-args: APP_VERSION=${{ steps.version.outputs.version }}
           # Reuse unchanged layers (dependency installs) between runs.
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # After both images are published, so a release never points at missing images.
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release
+    steps:
+      # Notes generated from the pull requests merged since the previous tag.
+      - run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -22,6 +22,7 @@ export const es: typeof en = {
     stock: 'Stock',
     search: 'Buscar medicamento',
   },
+  version: 'Versión {{version}}',
   credit:
     'Ícono de pastilla de Vaadin en <site>Icon-Icons.com</site> (<license>CC BY 4.0</license>), colores adaptados',
   offline: {

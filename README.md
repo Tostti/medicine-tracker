@@ -119,6 +119,34 @@ docker compose up -d --no-build
 Run the same two commands to update. `--no-build` uses the published images instead of
 looking for the source; set `IMAGE_TAG` in `.env` to pin a version (or roll back to one).
 
+## Releasing
+
+Versions follow [Semantic Versioning](https://semver.org): a fix bumps the patch
+(`1.1.1`), a new feature the minor (`1.2.0`), and a change that breaks existing installs
+the major (`2.0.0`). Tag the merged commit on `main`:
+
+```sh
+git switch main && git pull
+git tag -a v1.2.0 -m "Short summary of the release"
+git push origin v1.2.0
+```
+
+The tag publishes the images as `:1.2.0` and `:1.2`, and creates the GitHub Release with
+notes from the merged pull requests. Add upgrade notes to it when a release needs a
+manual step (a new `.env` variable, a changed default).
+
+To deploy it, set `IMAGE_TAG=1.2.0` in the server's `.env` and run the two commands
+above. To roll back, set the previous version and run them again.
+
+Releases with database migrations need care: the backend migrates the database forward
+when it starts, and an older version can't start on a database it doesn't know. Back up
+the database before deploying one (`pg_dump`), and to roll back either restore that
+backup, or undo the migrations while the new version is still running
+(`docker compose exec backend alembic downgrade <revision>`) and then switch versions.
+
+The version running is shown in the app: in the sidebar on a computer, at the bottom
+of the home page on a phone.
+
 ## Deploying behind HTTPS
 
 The `web` container serves plain HTTP on `WEB_PORT` (8090) and expects a reverse proxy
