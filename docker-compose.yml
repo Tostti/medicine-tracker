@@ -45,6 +45,15 @@ services:
     # Used directly by the Vite dev server's /api proxy.
     ports:
       - "127.0.0.1:8000:8000"
+    # Hardening: the image's files can't be changed, the process has no Linux capabilities
+    # and can't gain any (setuid binaries, etc.). Only /tmp is writable: large uploads are
+    # spooled there before going to S3.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
@@ -56,10 +65,23 @@ services:
     build: ./frontend
     image: ghcr.io/tostti/medicine-tracker-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    # WEB_BIND=127.0.0.1 when the reverse proxy runs on this same host (not in Docker),
-    # so the app can't be reached over plain HTTP from outside.
+    # Only this machine by default: the app has no login, so exposing it on every interface
+    # must be a deliberate choice (WEB_BIND=0.0.0.0, see the README's Security section).
     ports:
-      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8090}:80"
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8090}:80"
+    # Same hardening as the backend. Caddy needs no capability to bind port 80 as non-root.
+    read_only: true
+    # Caddy keeps no state worth saving here (HTTPS is the outer proxy's job), so its data
+    # and config dirs are tmpfs too. As volumes, an existing one created by the old root
+    # image would keep root ownership, and the unprivileged Caddy couldn't write to it.
+    # Docker mounts tmpfs as root:755, so they're handed to Caddy's user (see its Dockerfile).
+    tmpfs:
+      - /tmp
+      - /data:uid=10002,gid=10002,mode=0700
+      - /config:uid=10002,gid=10002,mode=0700
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - backend
 
