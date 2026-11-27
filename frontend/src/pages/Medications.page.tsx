@@ -29,7 +29,7 @@ const PAGE_SIZE = 20;
 interface ListFilters {
   search: string;
   inStock: boolean;
-  commonUse: boolean;
+  essential: boolean;
   sort: MedicationSort;
 }
 
@@ -43,7 +43,7 @@ const useListFilters = () => {
   const filters: ListFilters = {
     search: params.get('buscar') ?? '',
     inStock: params.has('en-stock'),
-    commonUse: params.has('uso-habitual'),
+    essential: params.has('esencial'),
     sort: SORT_PARAM[params.get('orden') ?? ''] ?? 'name',
   };
 
@@ -56,8 +56,8 @@ const useListFilters = () => {
     if (next.inStock) {
       nextParams.set('en-stock', '');
     }
-    if (next.commonUse) {
-      nextParams.set('uso-habitual', '');
+    if (next.essential) {
+      nextParams.set('esencial', '');
     }
     const orden = Object.keys(SORT_PARAM).find((key) => SORT_PARAM[key] === next.sort);
     if (orden) {
@@ -79,7 +79,7 @@ export function MedicationsPage() {
   const query = {
     q: search || undefined,
     in_stock: filters.inStock || undefined,
-    common_use: filters.commonUse || undefined,
+    essential: filters.essential || undefined,
     sort: filters.sort,
   };
   const { data, error, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
@@ -105,7 +105,7 @@ export function MedicationsPage() {
     }
   }, [inViewport, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const filtered = filters.search !== '' || filters.inStock || filters.commonUse;
+  const filtered = filters.search !== '' || filters.inStock || filters.essential;
 
   let content;
   if (data === undefined) {
@@ -129,7 +129,7 @@ export function MedicationsPage() {
         <EmptyStateActions>
           <Button
             variant="default"
-            onClick={() => setFilters({ search: '', inStock: false, commonUse: false })}
+            onClick={() => setFilters({ search: '', inStock: false, essential: false })}
           >
             {t('medications.clearFilters')}
           </Button>
@@ -202,13 +202,13 @@ export function MedicationsPage() {
             w={{ base: '100%', xs: 200 }}
           />
         </Group>
-        {/* Independent toggles: both on means "in stock AND common use". */}
+        {/* Independent toggles: both on means "in stock AND essential". */}
         <Group gap="xs">
           <Chip checked={filters.inStock} onChange={(inStock) => setFilters({ inStock })}>
             {t('medications.inStock')}
           </Chip>
-          <Chip checked={filters.commonUse} onChange={(commonUse) => setFilters({ commonUse })}>
-            {t('detail.commonUse')}
+          <Chip checked={filters.essential} onChange={(essential) => setFilters({ essential })}>
+            {t('essentials.essential')}
           </Chip>
         </Group>
       </Stack>

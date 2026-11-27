@@ -25,19 +25,19 @@ describe('MedicationsPage filters', () => {
   });
 
   it('sends the filters from the URL to the backend', async () => {
-    const { fetchMock } = setup('/medications?buscar=taf&en-stock=&uso-habitual=&orden=recientes');
+    const { fetchMock } = setup('/medications?buscar=taf&en-stock=&esencial=&orden=recientes');
     await screen.findByText('Tafirol');
 
     expect(lastQuery(fetchMock)).toEqual({
       q: 'taf',
       in_stock: 'true',
-      common_use: 'true',
+      essential: 'true',
       sort: 'newest',
       skip: '0',
       limit: '20',
     });
     expect(screen.getByRole('checkbox', { name: 'In stock' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Common use' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Essential' })).toBeChecked();
   });
 
   it('keeps the filters in the URL as they change', async () => {

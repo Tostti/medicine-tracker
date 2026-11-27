@@ -24,7 +24,6 @@ def test_create_medication_with_new_drugs_and_stock(client):
             "commercial_name": "Tafirol Plus",
             "type": "Tablets",
             "function": "Painkiller",
-            "common_use": True,
             "drugs": [
                 {"name": "Paracetamol", "dose": "500 mg"},
                 {"name": "Cafeína", "dose": "65 mg"},
@@ -39,7 +38,6 @@ def test_create_medication_with_new_drugs_and_stock(client):
     assert response.status_code == 201
     body = response.json()
     assert body["commercial_name"] == "Tafirol Plus"
-    assert body["common_use"] is True
     assert body["picture_uri"] is None
     assert drug_names(body) == ["Cafeína", "Paracetamol"]
     # Returned sorted by due date, whatever the order they were sent in.
@@ -56,7 +54,6 @@ def test_create_medication_defaults(create_medication):
 
     assert body["type"] is None
     assert body["function"] is None
-    assert body["common_use"] is False
     assert body["existences"] == []
 
 
@@ -224,7 +221,6 @@ def catalog(create_medication) -> dict[str, int]:
             type="Comprimidos",
             function="Analgésico",
             drugs=[{"name": "Paracetamol", "dose": "500 mg"}],
-            common_use=True,
             existences=[{"due_date": NEXT_YEAR, "low_amount": False}],
         ),
         create_medication(
@@ -286,21 +282,28 @@ def test_filter_in_stock_ignores_expired_stock(client, catalog):
     assert search(client, in_stock=True) == ["Tafirol"]
 
 
-def test_filter_by_common_use(client, catalog):
-    assert search(client, common_use=True) == ["Tafirol"]
-    assert search(client, common_use=False) == ["Ibupirac", "Amoxidal 100% natural_"]
+@pytest.fixture
+def paracetamol_essential(client):
+    # Written differently from Tafirol's "500 mg": doses are compared, not their text.
+    response = client.post("/essentials/", json={"drugs": [{"name": "paracetamol", "dose": "0,5g"}]})
+    assert response.status_code == 201, response.text
 
 
-def test_filters_combine(client, catalog):
-    assert search(client, q="a", in_stock=True, common_use=True) == ["Tafirol"]
-    assert search(client, q="ibu", common_use=True) == []
+def test_filter_by_essential(client, catalog, paracetamol_essential):
+    assert search(client, essential=True) == ["Tafirol"]
+    assert search(client, essential=False) == ["Tafirol", "Ibupirac", "Amoxidal 100% natural_"]
+
+
+def test_filters_combine(client, catalog, paracetamol_essential):
+    assert search(client, q="a", in_stock=True, essential=True) == ["Tafirol"]
+    assert search(client, q="ibu", essential=True) == []
 
 
 # --- Update ---
 
 
 def test_update_only_changes_the_fields_sent(client, create_medication):
-    created = create_medication(type="Tablets", function="Painkiller", common_use=True)
+    created = create_medication(type="Tablets", function="Painkiller")
 
     response = client.patch(
         f"/medications/{created['id']}", json={"commercial_name": "Renamed"}
@@ -321,7 +324,7 @@ def test_update_can_clear_optional_fields(client, create_medication):
     assert body["picture_uri"] is None
 
 
-@pytest.mark.parametrize("field", ["commercial_name", "common_use", "drugs"])
+@pytest.mark.parametrize("field", ["commercial_name", "drugs"])
 def test_update_rejects_null_for_required_fields(client, create_medication, field):
     created = create_medication()
 

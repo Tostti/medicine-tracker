@@ -52,7 +52,6 @@ describe('NewMedicationPage', () => {
           commercial_name: 'Tafirol',
           type: 'Tablets',
           function: null, // empty fields are sent as null
-          common_use: false,
           picture_uri: null,
           drugs: [{ name: 'Paracetamol', dose: '500 mg' }],
           existences: [],

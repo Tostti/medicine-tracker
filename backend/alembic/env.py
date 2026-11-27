@@ -60,6 +60,15 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Tests can pass a connection of their own (e.g. to a throwaway database), as in
+    # https://alembic.sqlalchemy.org/en/latest/cookbook.html#connection-sharing
+    given = config.attributes.get("connection")
+    if given is not None:
+        context.configure(connection=given, target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
+        return
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

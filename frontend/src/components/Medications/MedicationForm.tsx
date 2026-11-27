@@ -12,7 +12,6 @@ import {
   FileInput,
   Group,
   Stack,
-  Switch,
   Text,
   TextInput,
   Title,
@@ -39,7 +38,6 @@ export interface MedicationFormValues {
   commercial_name: string;
   type: string;
   function: string;
-  common_use: boolean;
   picture: File | null;
   drugs: { name: string; dose: string }[];
   existences: { due_date: string; low_amount: boolean }[];
@@ -71,7 +69,6 @@ export const MedicationForm = ({
   const [name, setName] = useState(medication?.commercial_name ?? initialName);
   const [type, setType] = useState(medication?.type ?? '');
   const [fn, setFn] = useState(medication?.function ?? '');
-  const [commonUse, setCommonUse] = useState(medication?.common_use ?? false);
   const [picture, setPicture] = useState<File | null>(null);
   const [drugs, setDrugs] = useState<DrugRow[]>(() =>
     medication && medication.drugs.length > 0
@@ -135,7 +132,6 @@ export const MedicationForm = ({
         commercial_name: name.trim(),
         type: type.trim(),
         function: fn.trim(),
-        common_use: commonUse,
         picture,
         drugs: filledDrugs.map((d) => ({ name: d.name.trim(), dose: d.dose.trim() })),
         existences: existences.map(({ due_date, low_amount }) => ({ due_date, low_amount })),
@@ -190,12 +186,6 @@ export const MedicationForm = ({
               onChange={setPicture}
             />
           </Group>
-          <Switch
-            label={t('form.commonUse')}
-            description={t('form.commonUseHelp')}
-            checked={commonUse}
-            onChange={(e) => setCommonUse(e.currentTarget.checked)}
-          />
         </Stack>
 
         <Stack gap="xs">

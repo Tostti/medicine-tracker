@@ -21,7 +21,7 @@ export interface Drug {
   name: string;
 }
 
-interface MedicationDrug {
+export interface MedicationDrug {
   dose: string;
   drug: Drug;
 }
@@ -31,7 +31,8 @@ export type MedicationSort = 'id' | 'name' | 'newest';
 
 export interface MedicationFilters {
   q?: string;
-  common_use?: boolean;
+  // Only medications that cover some essential.
+  essential?: boolean;
   // Only medications with some stock that hasn't expired.
   in_stock?: boolean;
   sort?: MedicationSort;
@@ -45,7 +46,6 @@ export interface Medication {
   type: string | null;
   function: string | null;
   picture_uri: string | null;
-  common_use: boolean;
   drugs: MedicationDrug[];
   existences: Existence[];
 }
@@ -56,8 +56,8 @@ export const fetchMedications = async (filters: MedicationFilters = {}): Promise
   if (filters.q) {
     url.searchParams.set('q', filters.q);
   }
-  if (filters.common_use !== undefined) {
-    url.searchParams.set('common_use', String(filters.common_use));
+  if (filters.essential) {
+    url.searchParams.set('essential', 'true');
   }
   if (filters.in_stock) {
     url.searchParams.set('in_stock', 'true');
@@ -103,14 +103,15 @@ export const fetchDrugs = async (): Promise<Drug[]> => {
 
 // A drug for a new medication: an existing one by id, or by name
 // (the backend reuses a drug with that name, ignoring case, or creates it).
-type MedicationDrugCreate = { drug_id: number; dose: string } | { name: string; dose: string };
+export type MedicationDrugCreate =
+  | { drug_id: number; dose: string }
+  | { name: string; dose: string };
 
 export interface MedicationCreate {
   commercial_name: string;
   type?: string | null;
   function?: string | null;
   picture_uri?: string | null;
-  common_use?: boolean;
   drugs: MedicationDrugCreate[];
   existences?: Omit<Existence, 'id'>[];
 }

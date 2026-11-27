@@ -1,6 +1,7 @@
 import { createBrowserRouter, data, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './layouts/AppLayout';
 import { ErrorPage } from './pages/Error.page';
+import { EssentialsPage } from './pages/Essentials.page';
 import { HomePage } from './pages/Home.page';
 import { MedicationDetailPage } from './pages/MedicationDetail.page';
 import { MedicationsPage } from './pages/Medications.page';
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
           { path: '/medications/new', element: <NewMedicationPage /> },
           { path: '/medications/:id', element: <MedicationDetailPage /> },
           { path: '/stock', element: <StockPage /> },
+          { path: '/essentials', element: <EssentialsPage /> },
           // Any other address: a 404, shown by the error page above.
           {
             path: '*',

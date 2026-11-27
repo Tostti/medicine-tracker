@@ -22,7 +22,6 @@ export function NewMedicationPage() {
       commercial_name: values.commercial_name,
       type: values.type || null,
       function: values.function || null,
-      common_use: values.common_use,
       picture_uri,
       drugs: values.drugs,
       existences: values.existences,

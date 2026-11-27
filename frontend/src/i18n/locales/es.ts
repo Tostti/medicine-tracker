@@ -44,6 +44,8 @@ export const es: typeof en = {
     title: 'Lista de compra',
     emptyTitle: 'Nada que comprar',
     emptyText: 'Todos los medicamentos necesarios están en buenas condiciones',
+    noEssentialsTitle: 'Todavía no hay esenciales',
+    noEssentialsText: 'Marcá lo que querés tener siempre en casa, y aparece acá cuando se acaba.',
   },
   expirations: {
     upcomingTitle: 'Próximos vencimientos',
@@ -63,6 +65,24 @@ export const es: typeof en = {
     expiredEmptyText: 'No hay nada para descartar',
     upcomingAction: 'Ver todo por vencimiento',
     expiredAction: 'Revisar y descartar',
+  },
+  essentials: {
+    title: 'Esenciales',
+    intro:
+      'Lo que querés tener siempre en casa, sea de la marca que sea. Cuenta cualquier medicamento con las mismas drogas y dosis.',
+    essential: 'Esencial',
+    manage: 'Esenciales',
+    add: 'Agregar esenciales',
+    addHelp:
+      'La droga y la dosis a tener siempre: “Ibuprofeno” y “600 mg”. Agregá más drogas para una combinación.',
+    alwaysKeep: 'Tener siempre {{composition}}',
+    stopKeeping: 'Dejar de tener',
+    stopKeepingConfirm:
+      '¿Dejar de tener {{composition}}? Sale de la lista de compra, para todas las marcas con esa composición.',
+    removeLabel: 'Dejar de tener {{composition}}',
+    needsComposition: 'Cargá su composición para marcarlo como esencial',
+    noBrands: 'Todavía no hay ninguna marca en casa',
+    emptyText: 'Agregá las drogas y dosis que querés tener siempre en casa.',
   },
   search: {
     title: 'Buscar medicamento',
@@ -95,7 +115,6 @@ export const es: typeof en = {
   },
   detail: {
     back: 'Medicamentos',
-    commonUse: 'Uso habitual',
     type: 'Tipo',
     function: 'Función',
     composition: 'Composición',
@@ -120,8 +139,6 @@ export const es: typeof en = {
     picture: 'Foto',
     changePicture: 'Cambiar foto',
     choosePicture: 'Elegir una foto',
-    commonUse: 'De uso habitual',
-    commonUseHelp: 'Se tiene en cuenta para la lista de compra',
     composition: 'Composición',
     drug: 'Droga',
     dose: 'Dosis',
@@ -174,5 +191,9 @@ export const es: typeof en = {
     addStock: 'No se pudo agregar el stock',
     updateStock: 'No se pudo actualizar el stock',
     discard: 'No se pudo descartar',
+    fetchEssentials: 'No se pudieron cargar los esenciales',
+    createEssential: 'No se pudo guardar el esencial',
+    duplicateEssential: 'Esa composición ya es un esencial',
+    deleteEssential: 'No se pudo quitar el esencial',
   },
 };

@@ -7,13 +7,13 @@ import {
   renderApp,
   screen,
 } from '@test-utils';
+import type { EssentialDetail } from '../api/essentials';
 import { MedicationDetailPage } from './MedicationDetail.page';
 
 const tafirol = aMedication({
   id: 3,
   commercial_name: 'Tafirol',
   type: 'Tablets',
-  common_use: true,
   drugs: [{ dose: '500 mg', drug: { id: 1, name: 'Paracetamol' } }],
   existences: [
     { id: 1, due_date: daysFromToday(-5), low_amount: false },
@@ -28,13 +28,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+// The medication at /api/medications/3, and these essentials at /api/essentials/.
+const api = (essentials: EssentialDetail[] = []) =>
+  mockFetch(({ url }) =>
+    url.pathname === '/api/essentials/' ? jsonResponse(essentials) : jsonResponse(tafirol)
+  );
+
 describe('MedicationDetailPage', () => {
   it('shows the medication', async () => {
-    mockFetch(() => jsonResponse(tafirol));
+    api();
     open();
 
     expect(await screen.findByRole('heading', { name: 'Tafirol' })).toBeInTheDocument();
-    expect(screen.getByText('Common use')).toBeInTheDocument();
     expect(screen.getByText('Tablets')).toBeInTheDocument();
     expect(screen.getByText('—')).toBeInTheDocument(); // no function
     expect(screen.getByText('Paracetamol')).toBeInTheDocument();
@@ -89,7 +94,7 @@ describe('MedicationDetailPage', () => {
     // A tiny backend: after the PATCH, reads return the renamed medication.
     let stored = tafirol;
     const fetchMock = mockFetch(({ method, url }) => {
-      if (url.pathname === '/api/drugs/') {
+      if (url.pathname === '/api/drugs/' || url.pathname === '/api/essentials/') {
         return jsonResponse([]);
       }
       if (method === 'PATCH') {
@@ -111,8 +116,54 @@ describe('MedicationDetailPage', () => {
       commercial_name: 'Tafirol Forte',
       type: 'Tablets',
       function: null,
-      common_use: true,
       drugs: [{ name: 'Paracetamol', dose: '500 mg' }],
+    });
+  });
+
+  describe('essential', () => {
+    it('offers to always keep its composition', async () => {
+      const fetchMock = api();
+      open();
+
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Always keep Paracetamol 500 mg' })
+      );
+
+      await vi.waitFor(() =>
+        expect(fetchMock.requests.find((r) => r.method === 'POST')).toMatchObject({
+          url: expect.objectContaining({ pathname: '/api/essentials/' }),
+          // By drug id: the composition this medication already has, not a new drug.
+          body: { drugs: [{ drug_id: 1, dose: '500 mg' }] },
+        })
+      );
+    });
+
+    it('shows when its composition is essential, and asks before removing it', async () => {
+      const fetchMock = api([{ id: 7, drugs: tafirol.drugs, medications: [tafirol] }]);
+      open();
+
+      expect(await screen.findByText('Essential')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Stop keeping' }));
+      // It affects every brand with this composition, so it says so first.
+      expect(await screen.findByText(/Stop keeping Paracetamol 500 mg\?/)).toBeInTheDocument();
+      fireEvent.click(screen.getAllByRole('button', { name: 'Stop keeping' }).at(-1)!);
+
+      await vi.waitFor(() =>
+        expect(fetchMock.requests.find((r) => r.method === 'DELETE')?.url.pathname).toBe(
+          '/api/essentials/7'
+        )
+      );
+    });
+
+    it('can’t be essential without a composition', async () => {
+      mockFetch(({ url }) =>
+        jsonResponse(url.pathname === '/api/essentials/' ? [] : { ...tafirol, drugs: [] })
+      );
+      open();
+
+      expect(
+        await screen.findByText('Add its composition to make it essential')
+      ).toBeInTheDocument();
     });
   });
 });
