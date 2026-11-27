@@ -95,3 +95,23 @@ describe('ExpiredList', () => {
     expect(await screen.findByText('Couldn’t load the medications')).toBeInTheDocument();
   });
 });
+
+describe('links to the stock page', () => {
+  it('sends the expired list to the stock page filtered by expired', async () => {
+    setup(<ExpiredList />, [aMedication({ existences: [existence(-3)] })]);
+    const link = await screen.findByRole('link', { name: 'Review and throw away' });
+    expect(link).toHaveAttribute('href', '/stock?estado=vencidos');
+  });
+
+  it('sends the upcoming list to all stock, by expiration', async () => {
+    setup(<NextExpirations />, [aMedication({ existences: [existence(3)] })]);
+    const link = await screen.findByRole('link', { name: 'See all by expiration' });
+    expect(link).toHaveAttribute('href', '/stock?orden=vencimiento');
+  });
+
+  it('has no link when there is nothing to list', async () => {
+    setup(<ExpiredList />, [aMedication({ existences: [existence(3)] })]);
+    await screen.findByText('Nothing expired');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+});

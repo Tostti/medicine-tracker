@@ -26,23 +26,16 @@ import {
   type Existence,
   type Medication,
   pictureSrc,
-  toISODate,
   updateExistence,
 } from '../../api/medications';
 import { formatDate } from '../../i18n';
+import { isExpired, isExpiringSoon } from './stockFilters';
 
-const oneMonthFromToday = () => {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1);
-  return toISODate(d);
-};
-
-// Same thresholds as the buying list: within a month counts as "expiring soon".
 const expiryStatus = (dueDate: string, t: TFunction) => {
-  if (dueDate < toISODate(new Date())) {
+  if (isExpired(dueDate)) {
     return { label: t('common.expired'), color: 'red' };
   }
-  if (dueDate <= oneMonthFromToday()) {
+  if (isExpiringSoon(dueDate)) {
     return { label: t('common.expiringSoon'), color: 'orange' };
   }
   return { label: t('common.valid'), color: 'green' };
